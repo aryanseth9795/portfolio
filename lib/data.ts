@@ -4,9 +4,9 @@ export const personalInfo = {
   tagline: "Building intelligent systems that ship.",
   location: "Jaunpur, India",
   email: "iiitianaryan@gmail.com",
-  phone: "+91 97957 85251",
+  phone: "+91 9795785251",
   github: "https://github.com/aryanseth9795",
-  linkedin: "https://linkedin.com/in/aryan-seth",
+  linkedin: "https://linkedin.com/in/aryanseth9795",
   resumeUrl: "/resume.pdf",
   roles: [
     "Full Stack Engineer",
