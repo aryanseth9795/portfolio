@@ -58,10 +58,10 @@ export default function Navbar() {
         transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
         style={{
-          background: scrolled ? "rgba(5, 5, 8, 0.85)" : "transparent",
+          background: scrolled ? "rgba(10, 10, 15, 0.9)" : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",
           borderBottom: scrolled
-            ? "1px solid rgba(0, 212, 255, 0.1)"
+            ? "1px solid rgba(255, 215, 0, 0.1)"
             : "1px solid transparent",
           transition:
             "background 0.3s, backdrop-filter 0.3s, border-bottom 0.3s",
@@ -78,19 +78,28 @@ export default function Navbar() {
               e.preventDefault();
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
-            className="relative text-2xl font-bold"
-            style={{ fontFamily: "var(--font-display)" }}
+            className="relative flex items-center gap-2"
             whileHover={{ scale: 1.05 }}
           >
-            <span className="gradient-text">AS</span>
-            <span
-              className="absolute -inset-2 rounded-lg opacity-0 hover:opacity-100 transition-opacity"
+            {/* Arc reactor dot */}
+            <div
+              className="w-3 h-3 rounded-full arc-pulse"
               style={{
-                background: "var(--gradient-main)",
-                filter: "blur(15px)",
-                zIndex: -1,
+                background: "var(--accent-arc)",
               }}
             />
+            <span
+              className="text-lg font-bold tracking-widest"
+              style={{
+                fontFamily: "var(--font-display)",
+                background: "var(--gradient-main)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              STARK.OS
+            </span>
           </motion.a>
 
           {/* Desktop links */}
@@ -99,16 +108,18 @@ export default function Navbar() {
               <li key={link.href}>
                 <button
                   onClick={() => scrollTo(link.href)}
-                  className="relative text-sm font-medium transition-colors duration-300"
+                  className="relative text-xs font-semibold tracking-widest transition-colors duration-300"
                   style={{
                     color:
                       activeSection === link.href.slice(1)
-                        ? "var(--accent-blue)"
+                        ? "var(--accent-gold)"
                         : "var(--text-muted)",
-                    fontFamily: "var(--font-body)",
+                    fontFamily: "var(--font-display)",
                     background: "none",
                     border: "none",
                     cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.15em",
                   }}
                 >
                   {link.label}
@@ -137,7 +148,7 @@ export default function Navbar() {
             style={{
               background: "none",
               border: "none",
-              color: "var(--text-primary)",
+              color: "var(--accent-gold)",
               cursor: "pointer",
             }}
           >
@@ -156,10 +167,28 @@ export default function Navbar() {
             transition={{ duration: 0.3, ease: "easeInOut" }}
             className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8"
             style={{
-              background: "rgba(5, 5, 8, 0.97)",
+              background: "rgba(10, 10, 15, 0.97)",
               backdropFilter: "blur(20px)",
             }}
           >
+            {/* Decorative corner brackets */}
+            <div
+              className="absolute top-6 left-6 w-8 h-8"
+              style={{
+                borderTop: "2px solid var(--accent-red)",
+                borderLeft: "2px solid var(--accent-red)",
+                opacity: 0.6,
+              }}
+            />
+            <div
+              className="absolute bottom-6 right-6 w-8 h-8"
+              style={{
+                borderBottom: "2px solid var(--accent-gold)",
+                borderRight: "2px solid var(--accent-gold)",
+                opacity: 0.6,
+              }}
+            />
+
             {navLinks.map((link, i) => (
               <motion.button
                 key={link.href}
@@ -167,16 +196,17 @@ export default function Navbar() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.07 }}
                 onClick={() => scrollTo(link.href)}
-                className="text-3xl font-bold"
+                className="text-3xl font-bold tracking-widest"
                 style={{
                   fontFamily: "var(--font-display)",
                   color:
                     activeSection === link.href.slice(1)
-                      ? "var(--accent-blue)"
+                      ? "var(--accent-gold)"
                       : "var(--text-primary)",
                   background: "none",
                   border: "none",
                   cursor: "pointer",
+                  textTransform: "uppercase",
                 }}
               >
                 {link.label}

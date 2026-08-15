@@ -18,15 +18,24 @@ export default function GlassCard({
   hover = true,
   glowColor,
 }: GlassCardProps) {
+  const glow = glowColor || "var(--accent-gold)";
+
   return (
     <motion.div
-      className={`glass ${hover ? "glass-hover gradient-border" : ""} ${className}`}
+      className={`glass hud-corners red-top-accent ${hover ? "glass-hover gradient-border" : ""} ${className}`}
       style={{
         padding: "24px",
         ...style,
         ...(glowColor ? ({ "--glow-color": glowColor } as CSSProperties) : {}),
       }}
-      whileHover={hover ? { y: -4, transition: { duration: 0.3 } } : undefined}
+      whileHover={
+        hover
+          ? {
+              y: -4,
+              transition: { duration: 0.3 },
+            }
+          : undefined
+      }
     >
       {children}
     </motion.div>

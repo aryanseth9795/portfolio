@@ -10,7 +10,7 @@ import {
 } from "framer-motion";
 import { useEffect } from "react";
 import { stats } from "@/lib/data";
-import { fadeInUp } from "@/lib/animations";
+import { fadeInUp, hudSlideIn } from "@/lib/animations";
 import SectionTitle from "@/components/ui/SectionTitle";
 
 function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
@@ -34,8 +34,12 @@ function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
   return (
     <span
       ref={ref}
-      className="text-4xl md:text-5xl font-bold gradient-text"
-      style={{ fontFamily: "var(--font-display)" }}
+      className="text-4xl md:text-5xl font-bold"
+      style={{
+        fontFamily: "var(--font-display)",
+        color: "var(--accent-gold)",
+        textShadow: "0 0 20px rgba(255, 215, 0, 0.3)",
+      }}
     >
       0{suffix}
     </span>
@@ -61,24 +65,55 @@ export default function About() {
               className="space-y-5 text-base md:text-lg leading-relaxed"
               style={{ color: "var(--text-muted)" }}
             >
-              <motion.p variants={fadeInUp} custom={0}>
-                I&apos;m a B.Tech ECE graduate from IIIT Bhagalpur (2025), now
-                working as a GenAI & Full Stack SDE intern at{" "}
-                <span className="gradient-text font-semibold">
-                  UltraTech Cement, Aditya Birla Group
+              <motion.div variants={hudSlideIn} custom={0}>
+                <span
+                  className="text-xs block mb-1 tracking-widest uppercase"
+                  style={{
+                    color: "var(--accent-arc)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {">"} Designation
                 </span>
-                .
-              </motion.p>
-              <motion.p variants={fadeInUp} custom={1}>
-                I specialize in building intelligent, production-grade
-                applications that sit at the intersection of modern web and AI.
-                I&apos;m obsessed with clean architecture, beautiful UIs, and
-                software that actually ships.
-              </motion.p>
-              <motion.p variants={fadeInUp} custom={2}>
-                Long-term, I&apos;m building toward launching my own tech
-                startup.
-              </motion.p>
+                <p>
+                  B.Tech ECE graduate from IIIT Bhagalpur (2025), now deployed
+                  as a GenAI & Full Stack SDE intern at{" "}
+                  <span className="gradient-text font-semibold">
+                    UltraTech Cement, Aditya Birla Group
+                  </span>
+                  .
+                </p>
+              </motion.div>
+              <motion.div variants={hudSlideIn} custom={1}>
+                <span
+                  className="text-xs block mb-1 tracking-widest uppercase"
+                  style={{
+                    color: "var(--accent-arc)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {">"} Mission
+                </span>
+                <p>
+                  Building intelligent, production-grade applications at the
+                  intersection of modern web and AI. Obsessed with clean
+                  architecture, premium UIs, and software that actually ships.
+                </p>
+              </motion.div>
+              <motion.div variants={hudSlideIn} custom={2}>
+                <span
+                  className="text-xs block mb-1 tracking-widest uppercase"
+                  style={{
+                    color: "var(--accent-arc)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {">"} Objective
+                </span>
+                <p>
+                  Building toward launching my own tech startup.
+                </p>
+              </motion.div>
             </div>
 
             {/* Quote */}
@@ -87,12 +122,14 @@ export default function About() {
               custom={3}
               className="mt-8 pl-4 text-lg italic"
               style={{
-                borderLeft: "2px solid var(--accent-blue)",
+                borderLeft: "2px solid var(--accent-gold)",
                 color: "var(--text-primary)",
                 fontFamily: "var(--font-display)",
+                fontSize: 14,
+                letterSpacing: "0.05em",
               }}
             >
-              &quot;I don&apos;t just write code — I craft experiences.&quot;
+              &quot;I don&apos;t just write code — I engineer experiences.&quot;
             </motion.blockquote>
           </motion.div>
 
@@ -109,15 +146,16 @@ export default function About() {
                   key={stat.label}
                   variants={fadeInUp}
                   custom={i}
-                  className="glass text-center p-6 rounded-2xl"
+                  className="glass hud-corners text-center p-6 rounded-2xl red-top-accent"
                   style={{ border: "1px solid var(--border-glow)" }}
                 >
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                   <p
-                    className="mt-2 text-sm"
+                    className="mt-2 text-sm uppercase tracking-wider"
                     style={{
                       color: "var(--text-muted)",
-                      fontFamily: "var(--font-body)",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
                     }}
                   >
                     {stat.label}

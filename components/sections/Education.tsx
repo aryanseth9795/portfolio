@@ -15,7 +15,7 @@ export default function Education() {
       <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
         <SectionTitle
           title="Education"
-          subtitle="The academic foundations that shaped my craft."
+          subtitle="Academic dossiers and training records."
         />
 
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -34,10 +34,10 @@ export default function Education() {
                 <GlassCard className="h-full">
                   {/* Floating icon */}
                   <motion.div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
+                    className="w-12 h-12 rounded-lg flex items-center justify-center mb-4"
                     style={{
-                      background: "rgba(0, 212, 255, 0.1)",
-                      border: "1px solid rgba(0, 212, 255, 0.2)",
+                      background: "rgba(255, 215, 0, 0.08)",
+                      border: "1px solid rgba(255, 215, 0, 0.2)",
                     }}
                     animate={{ y: [0, -6, 0] }}
                     transition={{
@@ -46,24 +46,29 @@ export default function Education() {
                       ease: "easeInOut",
                     }}
                   >
-                    <Icon size={24} style={{ color: "var(--accent-blue)" }} />
+                    <Icon
+                      size={24}
+                      style={{ color: "var(--accent-gold)" }}
+                    />
                   </motion.div>
 
+                  {/* File date stamp */}
                   <span
-                    className="text-xs mb-2 block"
+                    className="text-[10px] mb-2 block uppercase tracking-widest"
                     style={{
-                      color: "var(--text-muted)",
+                      color: "var(--accent-arc)",
                       fontFamily: "var(--font-mono)",
                     }}
                   >
-                    {edu.period}
+                    ◆ File Date: {edu.period}
                   </span>
 
                   <h3
-                    className="text-xl font-bold mb-1"
+                    className="text-lg font-bold mb-1 tracking-wider"
                     style={{
                       fontFamily: "var(--font-display)",
                       color: "var(--text-primary)",
+                      fontSize: 15,
                     }}
                   >
                     {edu.institution}
@@ -71,7 +76,7 @@ export default function Education() {
 
                   <p
                     className="text-sm mb-4 font-medium"
-                    style={{ color: "var(--accent-blue)" }}
+                    style={{ color: "var(--accent-gold)" }}
                   >
                     {edu.degree}
                   </p>
@@ -88,7 +93,7 @@ export default function Education() {
                         transition={{ delay: 0.3 + j * 0.1 }}
                       >
                         <span
-                          style={{ color: "var(--accent-green)" }}
+                          style={{ color: "var(--accent-gold)" }}
                           className="mt-1"
                         >
                           ▸

@@ -86,3 +86,75 @@ export const glowPulse: Variants = {
     transition: { duration: 2, repeat: Infinity, ease: "easeInOut" },
   },
 };
+
+// ─── Iron Man HUD Animations ───
+
+export const hudFlicker: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: [0, 1, 0.4, 1, 0.7, 1],
+    transition: {
+      duration: 0.8,
+      times: [0, 0.1, 0.2, 0.3, 0.4, 0.5],
+      ease: "easeOut",
+    },
+  },
+};
+
+export const hudSlideIn: Variants = {
+  hidden: { opacity: 0, x: -30, filter: "blur(4px)" },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    x: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.5,
+      delay: i * 0.12,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  }),
+};
+
+export const arcReactorPulse: Variants = {
+  hidden: { scale: 0, opacity: 0 },
+  visible: {
+    scale: [0, 1.15, 1],
+    opacity: [0, 1, 1],
+    transition: {
+      duration: 0.8,
+      ease: "easeOut",
+    },
+  },
+};
+
+export const scanLine: Variants = {
+  hidden: { scaleX: 0, opacity: 0 },
+  visible: {
+    scaleX: 1,
+    opacity: [0, 1, 1, 0.6],
+    transition: {
+      duration: 1.2,
+      ease: "easeInOut",
+    },
+  },
+};
+
+export const hologramIn: Variants = {
+  hidden: {
+    opacity: 0,
+    scale: 0.95,
+    y: 20,
+    filter: "blur(6px) brightness(1.5)",
+  },
+  visible: (i: number = 0) => ({
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    filter: "blur(0px) brightness(1)",
+    transition: {
+      duration: 0.7,
+      delay: i * 0.1,
+      ease: [0.25, 0.46, 0.45, 0.94],
+    },
+  }),
+};

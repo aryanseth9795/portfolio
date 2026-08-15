@@ -42,7 +42,6 @@ export default function Contact() {
     if (Object.keys(errs).length > 0) return;
 
     setSending(true);
-    // Simulate send
     await new Promise((r) => setTimeout(r, 1500));
     setSending(false);
     setSubmitted(true);
@@ -53,14 +52,15 @@ export default function Contact() {
   const inputStyle = (field: string) => ({
     width: "100%",
     padding: "12px 16px",
-    borderRadius: 12,
-    border: `1px solid ${errors[field] ? "#ef4444" : "rgba(0, 212, 255, 0.15)"}`,
-    background: "rgba(13, 13, 26, 0.6)",
+    borderRadius: 4,
+    border: `1px solid ${errors[field] ? "#ef4444" : "rgba(255, 215, 0, 0.12)"}`,
+    background: "rgba(17, 17, 25, 0.8)",
     color: "var(--text-primary)",
     fontFamily: "var(--font-body)",
     fontSize: 14,
     outline: "none",
     transition: "border-color 0.3s, box-shadow 0.3s",
+    letterSpacing: "0.02em",
   });
 
   const socials = [
@@ -78,8 +78,8 @@ export default function Contact() {
     <section id="contact" className="section-padding">
       <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
         <SectionTitle
-          title="Get In Touch"
-          subtitle="Have a project in mind? Let's talk."
+          title="Establish Comms"
+          subtitle="Open a secure channel. Let's build something remarkable."
         />
 
         <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
@@ -91,20 +91,20 @@ export default function Contact() {
             viewport={{ once: true }}
           >
             <h3
-              className="text-2xl font-bold mb-6"
-              style={{ fontFamily: "var(--font-display)" }}
+              className="text-xl font-bold mb-6 tracking-wider"
+              style={{ fontFamily: "var(--font-display)", fontSize: 16 }}
             >
-              Let&apos;s build something
-              <span className="gradient-text"> amazing</span> together.
+              Let&apos;s engineer something{" "}
+              <span className="gradient-text">remarkable</span> together.
             </h3>
 
             <p
               className="mb-8 leading-relaxed"
               style={{ color: "var(--text-muted)" }}
             >
-              I&apos;m currently open to new opportunities and collaborations.
-              Whether you have a question, a project proposal, or just want to
-              say hi, feel free to reach out!
+              Currently accepting new missions and collaborations. Whether you
+              have a project proposal, a question, or just want to establish
+              contact — the comms channel is open.
             </p>
 
             <div className="space-y-4">
@@ -118,25 +118,25 @@ export default function Contact() {
                       : "_blank"
                   }
                   rel="noopener noreferrer"
-                  className="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 group"
+                  className="flex items-center gap-4 p-3 rounded-lg transition-all duration-300 group"
                   style={{
                     border: "1px solid transparent",
                   }}
                   variants={fadeInUp}
                   custom={i}
                   whileHover={{
-                    borderColor: "rgba(0, 212, 255, 0.2)",
-                    background: "rgba(0, 212, 255, 0.03)",
+                    borderColor: "rgba(255, 215, 0, 0.15)",
+                    background: "rgba(255, 215, 0, 0.03)",
                   }}
                 >
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                     style={{
-                      background: "rgba(0, 212, 255, 0.08)",
-                      border: "1px solid rgba(0, 212, 255, 0.15)",
+                      background: "rgba(255, 215, 0, 0.06)",
+                      border: "1px solid rgba(255, 215, 0, 0.12)",
                     }}
                   >
-                    <Icon size={18} style={{ color: "var(--accent-blue)" }} />
+                    <Icon size={18} style={{ color: "var(--accent-gold)" }} />
                   </div>
                   <span
                     className="text-sm"
@@ -161,7 +161,7 @@ export default function Contact() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="glass p-8 rounded-2xl text-center h-full flex flex-col items-center justify-center"
+                className="glass hud-corners p-8 rounded-2xl text-center h-full flex flex-col items-center justify-center"
               >
                 <motion.div
                   initial={{ scale: 0 }}
@@ -170,23 +170,23 @@ export default function Contact() {
                 >
                   <CheckCircle
                     size={48}
-                    style={{ color: "var(--accent-green)" }}
+                    style={{ color: "var(--accent-gold)" }}
                   />
                 </motion.div>
                 <h4
-                  className="text-xl font-bold mt-4 mb-2"
-                  style={{ fontFamily: "var(--font-display)" }}
+                  className="text-lg font-bold mt-4 mb-2 tracking-wider"
+                  style={{ fontFamily: "var(--font-display)", fontSize: 14 }}
                 >
-                  Message Sent!
+                  Transmission Sent
                 </h4>
-                <p style={{ color: "var(--text-muted)" }}>
-                  Thanks for reaching out. I&apos;ll get back to you soon!
+                <p style={{ color: "var(--text-muted)", fontSize: 14 }}>
+                  Message received. I&apos;ll respond to your transmission shortly.
                 </p>
               </motion.div>
             ) : (
               <form
                 onSubmit={handleSubmit}
-                className="glass p-6 md:p-8 rounded-2xl space-y-5"
+                className="glass hud-corners p-6 md:p-8 rounded-2xl space-y-5"
               >
                 {(["name", "email", "subject"] as const).map((field, i) => (
                   <motion.div key={field} variants={fadeInUp} custom={i}>
@@ -204,14 +204,14 @@ export default function Contact() {
                       }
                       onFocus={(e) => {
                         e.currentTarget.style.borderColor =
-                          "rgba(0, 212, 255, 0.4)";
+                          "rgba(255, 215, 0, 0.4)";
                         e.currentTarget.style.boxShadow =
-                          "0 0 10px rgba(0, 212, 255, 0.1)";
+                          "0 0 10px rgba(255, 215, 0, 0.1)";
                       }}
                       onBlur={(e) => {
                         e.currentTarget.style.borderColor = errors[field]
                           ? "#ef4444"
-                          : "rgba(0, 212, 255, 0.15)";
+                          : "rgba(255, 215, 0, 0.12)";
                         e.currentTarget.style.boxShadow = "none";
                       }}
                       style={inputStyle(field)}
@@ -243,14 +243,14 @@ export default function Contact() {
                     }
                     onFocus={(e) => {
                       e.currentTarget.style.borderColor =
-                        "rgba(0, 212, 255, 0.4)";
+                        "rgba(255, 215, 0, 0.4)";
                       e.currentTarget.style.boxShadow =
-                        "0 0 10px rgba(0, 212, 255, 0.1)";
+                        "0 0 10px rgba(255, 215, 0, 0.1)";
                     }}
                     onBlur={(e) => {
                       e.currentTarget.style.borderColor = errors.message
                         ? "#ef4444"
-                        : "rgba(0, 212, 255, 0.15)";
+                        : "rgba(255, 215, 0, 0.12)";
                       e.currentTarget.style.boxShadow = "none";
                     }}
                     style={{
@@ -276,7 +276,7 @@ export default function Contact() {
                   style={{
                     background: "var(--gradient-main)",
                     border: "none",
-                    color: "#050508",
+                    color: "#0a0a0f",
                     fontWeight: 700,
                     width: "100%",
                     justifyContent: "center",
@@ -286,13 +286,13 @@ export default function Contact() {
                     <div
                       className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
                       style={{
-                        borderColor: "#050508",
+                        borderColor: "#0a0a0f",
                         borderTopColor: "transparent",
                       }}
                     />
                   ) : (
                     <>
-                      Send Message <Send size={16} />
+                      Transmit <Send size={16} />
                     </>
                   )}
                 </MagneticButton>
@@ -309,9 +309,12 @@ export default function Contact() {
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
       >
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Designed & Built by{" "}
-          <span className="gradient-text font-semibold">Aryan Seth</span> ©{" "}
+        <p
+          className="text-xs uppercase tracking-widest"
+          style={{ color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}
+        >
+          Designed & Engineered at{" "}
+          <span className="gradient-text font-semibold">STARK.OS Labs</span> ©{" "}
           {new Date().getFullYear()}
         </p>
       </motion.footer>

@@ -16,7 +16,8 @@ export default function ScrollProgress() {
       style={{
         scaleX,
         background: "var(--gradient-main)",
-        boxShadow: "0 0 10px rgba(0, 212, 255, 0.5)",
+        boxShadow:
+          "0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(230, 36, 41, 0.3)",
       }}
     />
   );

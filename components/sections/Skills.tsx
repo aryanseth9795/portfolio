@@ -6,12 +6,12 @@ import { fadeInUp, scaleIn } from "@/lib/animations";
 import SectionTitle from "@/components/ui/SectionTitle";
 
 const categoryColors: Record<string, string> = {
-  Frontend: "#00d4ff",
-  Backend: "#7c3aed",
-  Databases: "#39ff14",
-  "DevOps / Cloud": "#f59e0b",
-  "AI / ML": "#ec4899",
-  Tools: "#ff6b35",
+  Frontend: "#ffd700",
+  Backend: "#e62429",
+  Databases: "#4fc3f7",
+  "DevOps / Cloud": "#ff6b35",
+  "AI / ML": "#ffa726",
+  Tools: "#ef5350",
 };
 
 export default function Skills() {
@@ -20,12 +20,12 @@ export default function Skills() {
       <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
         <SectionTitle
           title="Skills"
-          subtitle="Technologies and tools I work with daily."
+          subtitle="Arsenal of technologies and tools."
         />
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {Object.entries(skills).map(([category, items], i) => {
-            const color = categoryColors[category] || "#00d4ff";
+            const color = categoryColors[category] || "#ffd700";
             return (
               <motion.div
                 key={category}
@@ -34,7 +34,7 @@ export default function Skills() {
                 whileInView="visible"
                 viewport={{ once: true, margin: "-50px" }}
                 custom={i}
-                className="glass p-6 rounded-2xl"
+                className="glass hud-corners red-top-accent p-6 rounded-2xl"
                 style={{
                   border: `1px solid ${color}15`,
                 }}
@@ -48,7 +48,7 @@ export default function Skills() {
                     }}
                   />
                   <h3
-                    className="text-lg font-bold"
+                    className="text-sm font-bold tracking-widest uppercase"
                     style={{
                       fontFamily: "var(--font-display)",
                       color: color,
@@ -64,13 +64,14 @@ export default function Skills() {
                       key={skill}
                       variants={scaleIn}
                       custom={j}
-                      className="text-xs px-3 py-1.5 rounded-full font-medium cursor-default"
+                      className="text-xs px-3 py-1.5 rounded-sm font-medium cursor-default"
                       style={{
                         background: `${color}10`,
                         color: color,
                         border: `1px solid ${color}25`,
                         fontFamily: "var(--font-mono)",
                         transition: "all 0.3s",
+                        letterSpacing: "0.03em",
                       }}
                       whileHover={{
                         background: `${color}20`,

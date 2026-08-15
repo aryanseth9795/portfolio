@@ -46,12 +46,14 @@ export default function TerminalText({
 
   return (
     <span className={className} style={{ fontFamily: "var(--font-mono)" }}>
-      <span style={{ color: "var(--accent-green)" }}>{">"} </span>
-      {displayText}
+      <span style={{ color: "var(--accent-arc)", opacity: 0.7 }}>
+        J.A.R.V.I.S. {">"}{" "}
+      </span>
+      <span style={{ color: "var(--accent-gold)" }}>{displayText}</span>
       <span
         className="inline-block w-[2px] h-[1.1em] ml-1 align-middle"
         style={{
-          background: "var(--accent-blue)",
+          background: "var(--accent-arc)",
           animation: "blink 1s step-end infinite",
         }}
       />

@@ -40,19 +40,21 @@ export default function MagneticButton({
       onMouseLeave={reset}
       animate={{ x: position.x, y: position.y }}
       transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
-      className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm cursor-pointer ${className}`}
+      className={`inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm cursor-pointer hud-corners ${className}`}
       style={{
         fontFamily: "var(--font-body)",
-        border: "1px solid rgba(0, 212, 255, 0.3)",
+        border: "1px solid rgba(255, 215, 0, 0.3)",
         color: "var(--text-primary)",
-        background: "rgba(0, 212, 255, 0.05)",
+        background: "rgba(255, 215, 0, 0.05)",
         transition: "border-color 0.3s, box-shadow 0.3s, background 0.3s",
+        letterSpacing: "0.05em",
+        textTransform: "uppercase" as const,
         ...style,
       }}
       whileHover={{
-        boxShadow: "0 0 20px rgba(0, 212, 255, 0.3)",
-        borderColor: "rgba(0, 212, 255, 0.6)",
-        background: "rgba(0, 212, 255, 0.1)",
+        boxShadow: "0 0 25px rgba(230, 36, 41, 0.3), 0 0 50px rgba(255, 215, 0, 0.15)",
+        borderColor: "rgba(255, 215, 0, 0.6)",
+        background: "rgba(255, 215, 0, 0.08)",
       }}
       onClick={onClick}
     >

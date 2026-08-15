@@ -12,7 +12,7 @@ export default function Experience() {
       <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
         <SectionTitle
           title="Experience"
-          subtitle="Where I've been building and shipping."
+          subtitle="Deployment history and active missions."
         />
 
         <div className="relative max-w-3xl mx-auto">
@@ -29,7 +29,7 @@ export default function Experience() {
           {experiences.map((exp, i) => (
             <motion.div
               key={i}
-              variants={i % 2 === 0 ? fadeInUp : fadeInUp}
+              variants={fadeInUp}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
@@ -38,29 +38,39 @@ export default function Experience() {
                 i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
               }`}
             >
-              {/* Timeline dot */}
-              <div
+              {/* Timeline dot — arc reactor style */}
+              <motion.div
                 className="absolute left-[14px] md:left-1/2 md:-translate-x-1/2 w-3 h-3 rounded-full z-10 mt-8"
                 style={{
-                  background: "var(--accent-blue)",
-                  boxShadow: "0 0 12px rgba(0, 212, 255, 0.6)",
+                  background: "var(--accent-gold)",
+                  boxShadow:
+                    "0 0 12px rgba(255, 215, 0, 0.6), 0 0 24px rgba(230, 36, 41, 0.3)",
                 }}
+                animate={{
+                  boxShadow: [
+                    "0 0 12px rgba(255, 215, 0, 0.4), 0 0 24px rgba(230, 36, 41, 0.2)",
+                    "0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(230, 36, 41, 0.4)",
+                    "0 0 12px rgba(255, 215, 0, 0.4), 0 0 24px rgba(230, 36, 41, 0.2)",
+                  ],
+                }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
 
-              {/* Card — full width on mobile, half on desktop */}
+              {/* Card */}
               <div className="pl-12 md:pl-0 md:w-1/2">
                 <GlassCard>
                   <div className="flex items-center gap-2 mb-2">
                     {exp.highlight && (
                       <span
-                        className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                        className="text-[10px] px-2.5 py-0.5 rounded-sm font-bold uppercase tracking-widest"
                         style={{
-                          background: "rgba(0, 212, 255, 0.1)",
-                          color: "var(--accent-blue)",
-                          border: "1px solid rgba(0, 212, 255, 0.3)",
+                          background: "rgba(230, 36, 41, 0.1)",
+                          color: "var(--accent-red)",
+                          border: "1px solid rgba(230, 36, 41, 0.3)",
+                          fontFamily: "var(--font-mono)",
                         }}
                       >
-                        Current
+                        ● Active
                       </span>
                     )}
                     <span
@@ -75,10 +85,11 @@ export default function Experience() {
                   </div>
 
                   <h3
-                    className="text-lg font-bold mb-1"
+                    className="text-lg font-bold mb-1 tracking-wider"
                     style={{
                       fontFamily: "var(--font-display)",
                       color: "var(--text-primary)",
+                      fontSize: 15,
                     }}
                   >
                     {exp.role}
@@ -86,7 +97,7 @@ export default function Experience() {
 
                   <p
                     className="text-sm mb-3 font-medium"
-                    style={{ color: "var(--accent-blue)" }}
+                    style={{ color: "var(--accent-gold)" }}
                   >
                     {exp.company}
                   </p>
@@ -102,16 +113,18 @@ export default function Experience() {
                     {exp.tags.map((tag) => (
                       <motion.span
                         key={tag}
-                        className="text-xs px-2.5 py-1 rounded-full"
+                        className="text-xs px-2.5 py-1 rounded-sm"
                         style={{
-                          background: "rgba(124, 58, 237, 0.1)",
-                          color: "var(--accent-violet)",
-                          border: "1px solid rgba(124, 58, 237, 0.2)",
+                          background: "rgba(255, 215, 0, 0.06)",
+                          color: "var(--accent-gold)",
+                          border: "1px solid rgba(255, 215, 0, 0.15)",
                           fontFamily: "var(--font-mono)",
+                          letterSpacing: "0.05em",
+                          fontSize: 10,
                         }}
                         whileHover={{
-                          background: "rgba(124, 58, 237, 0.2)",
-                          borderColor: "rgba(124, 58, 237, 0.4)",
+                          background: "rgba(255, 215, 0, 0.12)",
+                          borderColor: "rgba(255, 215, 0, 0.3)",
                         }}
                       >
                         {tag}
