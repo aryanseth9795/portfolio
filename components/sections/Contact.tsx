@@ -1,320 +1,356 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Send,
-  MapPin,
-  Mail,
-  Linkedin,
-  Github,
-  CheckCircle,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useInView } from "framer-motion";
+import { Github, Linkedin, Check, Copy, MapPin, Phone } from "lucide-react";
+import { useMode } from "@/components/mode/ModeProvider";
 import { personalInfo } from "@/lib/data";
-import { fadeInUp } from "@/lib/animations";
-import SectionTitle from "@/components/ui/SectionTitle";
-import MagneticButton from "@/components/ui/MagneticButton";
+import { useCopy } from "@/lib/copy";
+import SectionHeading from "@/components/ui/SectionHeading";
+import Reveal from "@/components/ui/Reveal";
+import Panel from "@/components/ui/Panel";
+
+type CopyState = "idle" | "copied" | "failed";
+
+/** Types the terminal lines once, when the panel scrolls into view. */
+function useTypedLines(lines: string[], start: boolean, instant: boolean) {
+  const [lineIdx, setLineIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+
+  useEffect(() => {
+    if (!start || instant) return;
+    if (lineIdx >= lines.length) return;
+    const line = lines[lineIdx];
+    const t =
+      charIdx < line.length
+        ? window.setTimeout(() => setCharIdx((c) => c + 1), 24)
+        : window.setTimeout(() => {
+            setLineIdx((l) => l + 1);
+            setCharIdx(0);
+          }, 260);
+    return () => window.clearTimeout(t);
+  }, [start, instant, lines, lineIdx, charIdx]);
+
+  // Reduced motion: everything is shown at once, no typing.
+  if (instant) return { lineIdx: lines.length, charIdx: 0, done: true };
+  return { lineIdx, charIdx, done: lineIdx >= lines.length };
+}
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitted, setSubmitted] = useState(false);
-  const [sending, setSending] = useState(false);
+  const copy = useCopy();
+  const { mode, reducedMotion } = useMode();
+  const isIron = mode === "ironman";
+  const [state, setState] = useState<CopyState>("idle");
+  // Observed on the <section>, which exists in both modes. A ref on the
+  // terminal itself missed its element: the page first renders in default
+  // mode, so the observer attached before the terminal existed.
+  const sectionRef = useRef<HTMLElement>(null);
+  const termInView = useInView(sectionRef, { once: true, amount: 0.25 });
+  const typed = useTypedLines(
+    copy.contact.terminalLines,
+    isIron && termInView,
+    reducedMotion,
+  );
 
-  const validate = () => {
-    const errs: Record<string, string> = {};
-    if (!formData.name.trim()) errs.name = "Name is required";
-    if (!formData.email.trim()) errs.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) errs.email = "Invalid email";
-    if (!formData.message.trim()) errs.message = "Message is required";
-    return errs;
+  const copyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(personalInfo.email);
+      setState("copied");
+    } catch {
+      // Clipboard rejects on insecure origins and when permission is denied.
+      setState("failed");
+    }
+    window.setTimeout(() => setState("idle"), 2200);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const errs = validate();
-    setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+  const label =
+    state === "copied"
+      ? copy.contact.copiedLabel
+      : state === "failed"
+        ? copy.contact.copyFailedLabel
+        : copy.contact.copyLabel;
 
-    setSending(true);
-    // Simulate send
-    await new Promise((r) => setTimeout(r, 1500));
-    setSending(false);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
-    setFormData({ name: "", email: "", subject: "", message: "" });
-  };
-
-  const inputStyle = (field: string) => ({
-    width: "100%",
-    padding: "12px 16px",
-    borderRadius: 12,
-    border: `1px solid ${errors[field] ? "#ef4444" : "rgba(0, 212, 255, 0.15)"}`,
-    background: "rgba(13, 13, 26, 0.6)",
-    color: "var(--text-primary)",
-    fontFamily: "var(--font-body)",
-    fontSize: 14,
-    outline: "none",
-    transition: "border-color 0.3s, box-shadow 0.3s",
-  });
-
-  const socials = [
+  const details = [
     {
-      icon: Mail,
-      href: `mailto:${personalInfo.email}`,
-      label: personalInfo.email,
+      icon: MapPin,
+      label: copy.contact.locationLabel,
+      value: personalInfo.location,
+      href: undefined,
     },
-    { icon: Github, href: personalInfo.github, label: "GitHub" },
-    { icon: Linkedin, href: personalInfo.linkedin, label: "LinkedIn" },
-    { icon: MapPin, href: "#", label: personalInfo.location },
+    {
+      icon: Phone,
+      label: "Phone",
+      value: personalInfo.phone,
+      href: `tel:${personalInfo.phone.replace(/\s/g, "")}`,
+    },
+    {
+      icon: Github,
+      label: "GitHub",
+      value: "aryanseth9795",
+      href: personalInfo.github,
+    },
+    {
+      icon: Linkedin,
+      label: "LinkedIn",
+      value: "aryanseth9795",
+      href: personalInfo.linkedin,
+    },
   ];
 
-  return (
-    <section id="contact" className="section-padding">
-      <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <SectionTitle
-          title="Get In Touch"
-          subtitle="Have a project in mind? Let's talk."
-        />
+  const emailRow = (
+    <div
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: 18,
+      }}
+    >
+      <a
+        href={`mailto:${personalInfo.email}`}
+        className="email-link"
+        style={{
+          fontFamily: isIron ? "var(--font-mono-active)" : "var(--font-display-active)",
+          fontSize: "var(--step-2)",
+          letterSpacing: isIron ? "0.02em" : "var(--heading-tracking)",
+          color: isIron ? "var(--accent)" : "var(--text)",
+          position: "relative",
+          paddingBottom: 4,
+          wordBreak: "break-word",
+        }}
+      >
+        {personalInfo.email}
+      </a>
 
-        <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-          {/* Contact Info */}
-          <motion.div
-            variants={fadeInUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            <h3
-              className="text-2xl font-bold mb-6"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Let&apos;s build something
-              <span className="gradient-text"> amazing</span> together.
-            </h3>
+      <button
+        onClick={copyEmail}
+        className="mono"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 7,
+          padding: "8px 14px",
+          borderRadius: "var(--radius)",
+          border: "1px solid var(--border)",
+          background: "transparent",
+          color: state === "copied" ? "var(--accent)" : "var(--text-dim)",
+          cursor: "pointer",
+          fontSize: "0.7rem",
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          transition: "color 0.2s, border-color 0.2s",
+        }}
+      >
+        {state === "copied" ? <Check size={14} /> : <Copy size={14} />}
+        {label}
+      </button>
+    </div>
+  );
 
-            <p
-              className="mb-8 leading-relaxed"
-              style={{ color: "var(--text-muted)" }}
-            >
-              I&apos;m currently open to new opportunities and collaborations.
-              Whether you have a question, a project proposal, or just want to
-              say hi, feel free to reach out!
-            </p>
+  const detailLabel = (Icon: (typeof details)[number]["icon"], l: string) => (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 9,
+        marginBottom: 9,
+        color: "var(--accent)",
+      }}
+    >
+      <Icon size={15} />
+      <span
+        className="mono"
+        style={{
+          fontSize: "0.66rem",
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+        }}
+      >
+        {l}
+      </span>
+    </div>
+  );
 
-            <div className="space-y-4">
-              {socials.map(({ icon: Icon, href, label }, i) => (
-                <motion.a
-                  key={label}
-                  href={href}
-                  target={
-                    href.startsWith("mailto") || href === "#"
-                      ? undefined
-                      : "_blank"
-                  }
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 group"
+  /* ─── Iron Man: comm terminal ─── */
+  if (isIron) {
+    return (
+      <section id="contact" ref={sectionRef} className="section-padding">
+        <div className="container">
+          <SectionHeading section="contact" />
+
+          <Reveal>
+            <div>
+              <Panel interactive={false} style={{ padding: 0 }}>
+                {/* Title bar */}
+                <div
+                  className="mono"
                   style={{
-                    border: "1px solid transparent",
-                  }}
-                  variants={fadeInUp}
-                  custom={i}
-                  whileHover={{
-                    borderColor: "rgba(0, 212, 255, 0.2)",
-                    background: "rgba(0, 212, 255, 0.03)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "11px 18px",
+                    borderBottom: "1px solid var(--border)",
+                    fontSize: 11,
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                    color: "var(--text-dim)",
                   }}
                 >
+                  {["var(--accent-2)", "var(--accent)", "var(--accent-3)"].map((c) => (
+                    <span
+                      key={c}
+                      aria-hidden="true"
+                      style={{ width: 8, height: 8, borderRadius: "50%", background: c, opacity: 0.8 }}
+                    />
+                  ))}
+                  <span style={{ marginLeft: 8 }}>{copy.contact.terminalTitle}</span>
+                </div>
+
+                <div style={{ padding: "26px 24px 30px" }}>
+                  {/* Typed lines */}
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    className="mono"
+                    aria-label={copy.contact.terminalLines.join(". ")}
                     style={{
-                      background: "rgba(0, 212, 255, 0.08)",
-                      border: "1px solid rgba(0, 212, 255, 0.15)",
+                      fontSize: "0.9rem",
+                      lineHeight: 1.9,
+                      color: "var(--accent-3)",
+                      minHeight: `${copy.contact.terminalLines.length * 1.9}em`,
+                      marginBottom: 22,
                     }}
                   >
-                    <Icon size={18} style={{ color: "var(--accent-blue)" }} />
+                    {copy.contact.terminalLines.map((line, i) => {
+                      if (i > typed.lineIdx) return null;
+                      const text = i < typed.lineIdx ? line : line.slice(0, typed.charIdx);
+                      return (
+                        <div key={line} aria-hidden="true">
+                          <span style={{ color: "var(--accent)" }}>&gt; </span>
+                          {text}
+                          {i === typed.lineIdx && !typed.done && (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                width: 8,
+                                height: "1em",
+                                marginLeft: 2,
+                                verticalAlign: "text-bottom",
+                                background: "var(--accent-3)",
+                                animation: "hud-flicker 1s steps(2) infinite",
+                              }}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                  <span
-                    className="text-sm"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {label}
-                  </span>
-                </motion.a>
-              ))}
-            </div>
-          </motion.div>
 
-          {/* Contact Form */}
-          <motion.div
-            variants={fadeInUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            custom={2}
-          >
-            {submitted ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="glass p-8 rounded-2xl text-center h-full flex flex-col items-center justify-center"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-                >
-                  <CheckCircle
-                    size={48}
-                    style={{ color: "var(--accent-green)" }}
-                  />
-                </motion.div>
-                <h4
-                  className="text-xl font-bold mt-4 mb-2"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  Message Sent!
-                </h4>
-                <p style={{ color: "var(--text-muted)" }}>
-                  Thanks for reaching out. I&apos;ll get back to you soon!
-                </p>
-              </motion.div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="glass p-6 md:p-8 rounded-2xl space-y-5"
-              >
-                {(["name", "email", "subject"] as const).map((field, i) => (
-                  <motion.div key={field} variants={fadeInUp} custom={i}>
-                    <input
-                      type={field === "email" ? "email" : "text"}
-                      placeholder={
-                        field.charAt(0).toUpperCase() + field.slice(1)
-                      }
-                      value={formData[field]}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          [field]: e.target.value,
-                        }))
-                      }
-                      onFocus={(e) => {
-                        e.currentTarget.style.borderColor =
-                          "rgba(0, 212, 255, 0.4)";
-                        e.currentTarget.style.boxShadow =
-                          "0 0 10px rgba(0, 212, 255, 0.1)";
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.borderColor = errors[field]
-                          ? "#ef4444"
-                          : "rgba(0, 212, 255, 0.15)";
-                        e.currentTarget.style.boxShadow = "none";
-                      }}
-                      style={inputStyle(field)}
-                      aria-label={field}
-                    />
-                    {errors[field] && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-xs mt-1 ml-1"
-                        style={{ color: "#ef4444" }}
-                      >
-                        {errors[field]}
-                      </motion.p>
-                    )}
-                  </motion.div>
-                ))}
-
-                <motion.div variants={fadeInUp} custom={3}>
-                  <textarea
-                    placeholder="Message"
-                    rows={5}
-                    value={formData.message}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        message: e.target.value,
-                      }))
-                    }
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor =
-                        "rgba(0, 212, 255, 0.4)";
-                      e.currentTarget.style.boxShadow =
-                        "0 0 10px rgba(0, 212, 255, 0.1)";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = errors.message
-                        ? "#ef4444"
-                        : "rgba(0, 212, 255, 0.15)";
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
+                  <div
                     style={{
-                      ...inputStyle("message"),
-                      resize: "vertical" as const,
+                      opacity: typed.done ? 1 : 0.15,
+                      transition: "opacity 0.5s var(--ease)",
                     }}
-                    aria-label="Message"
-                  />
-                  {errors.message && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-xs mt-1 ml-1"
-                      style={{ color: "#ef4444" }}
-                    >
-                      {errors.message}
-                    </motion.p>
-                  )}
-                </motion.div>
+                  >
+                    {emailRow}
+                  </div>
+                </div>
+              </Panel>
+            </div>
+          </Reveal>
 
-                <MagneticButton
-                  onClick={() => {}}
-                  style={{
-                    background: "var(--gradient-main)",
-                    border: "none",
-                    color: "#050508",
-                    fontWeight: 700,
-                    width: "100%",
-                    justifyContent: "center",
-                  }}
-                >
-                  {sending ? (
-                    <div
-                      className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
-                      style={{
-                        borderColor: "#050508",
-                        borderTopColor: "transparent",
-                      }}
-                    />
-                  ) : (
-                    <>
-                      Send Message <Send size={16} />
-                    </>
-                  )}
-                </MagneticButton>
-              </form>
-            )}
-          </motion.div>
+          {/* Comm links as one connected strip */}
+          <Reveal delay={0.1}>
+            <div className="comm-strip" style={{ marginTop: 18 }}>
+              {details.map(({ icon: Icon, label: l, value, href }) =>
+                href ? (
+                  <a
+                    key={l}
+                    href={href}
+                    target={href.startsWith("http") ? "_blank" : undefined}
+                    rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    style={{ color: "var(--text)", wordBreak: "break-word" }}
+                  >
+                    {detailLabel(Icon, l)}
+                    {value}
+                  </a>
+                ) : (
+                  <div key={l} style={{ color: "var(--text)" }}>
+                    {detailLabel(Icon, l)}
+                    {value}
+                  </div>
+                ),
+              )}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+    );
+  }
+
+  /* ─── Default ─── */
+  return (
+    <section id="contact" ref={sectionRef} className="section-padding">
+      <div className="container">
+        <SectionHeading section="contact" />
+
+        <Reveal>
+          <h3
+            style={{
+              fontSize: "var(--step-4)",
+              margin: "0 0 18px",
+              maxWidth: "16ch",
+              lineHeight: 1.02,
+            }}
+          >
+            {copy.contact.heading}
+          </h3>
+        </Reveal>
+
+        <Reveal delay={0.08}>
+          <p
+            style={{
+              margin: "0 0 40px",
+              maxWidth: "50ch",
+              color: "var(--text-dim)",
+              fontSize: "var(--step-1)",
+              lineHeight: 1.6,
+            }}
+          >
+            {copy.contact.body}
+          </p>
+        </Reveal>
+
+        <Reveal delay={0.14}>
+          <div style={{ marginBottom: 44 }}>{emailRow}</div>
+        </Reveal>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))",
+            gap: 16,
+          }}
+        >
+          {details.map(({ icon: Icon, label: l, value, href }, i) => (
+            <Reveal key={l} delay={0.06 * i}>
+              <Panel style={{ height: "100%" }}>
+                {detailLabel(Icon, l)}
+                {href ? (
+                  <a
+                    href={href}
+                    target={href.startsWith("http") ? "_blank" : undefined}
+                    rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    style={{ color: "var(--text)", wordBreak: "break-word" }}
+                  >
+                    {value}
+                  </a>
+                ) : (
+                  <span style={{ color: "var(--text)" }}>{value}</span>
+                )}
+              </Panel>
+            </Reveal>
+          ))}
         </div>
       </div>
-
-      {/* Footer */}
-      <motion.footer
-        className="text-center mt-20 pb-8"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-      >
-        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-          Designed & Built by{" "}
-          <span className="gradient-text font-semibold">Aryan Seth</span> ©{" "}
-          {new Date().getFullYear()}
-        </p>
-      </motion.footer>
     </section>
   );
 }

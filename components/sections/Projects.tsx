@@ -1,316 +1,358 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  motion,
-  useMotionValue,
-  useSpring,
-  useTransform,
-  AnimatePresence,
-} from "framer-motion";
-import { ExternalLink, Github } from "lucide-react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { ArrowUpRight, Github } from "lucide-react";
 import { projects } from "@/lib/data";
-import { fadeInUp } from "@/lib/animations";
-import SectionTitle from "@/components/ui/SectionTitle";
+import { useCopy } from "@/lib/copy";
+import { useMode } from "@/components/mode/ModeProvider";
+import SectionHeading from "@/components/ui/SectionHeading";
+import Panel from "@/components/ui/Panel";
+import Tag from "@/components/ui/Tag";
 
-const categories = [
-  "All",
-  "Full Stack Web App",
-  "Frontend App",
-  "Mobile App",
-  "Applications",
-];
+type Project = (typeof projects)[number];
 
 function ProjectCard({
   project,
-  index,
   featured,
 }: {
-  project: (typeof projects)[0];
-  index: number;
-  featured?: boolean;
+  project: Project;
+  featured: boolean;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [hovered, setHovered] = useState(false);
+  const copy = useCopy();
+  const { mode, reducedMotion } = useMode();
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotateX = useSpring(useTransform(y, [-100, 100], [6, -6]), {
-    stiffness: 200,
-    damping: 20,
-  });
-  const rotateY = useSpring(useTransform(x, [-100, 100], [-6, 6]), {
-    stiffness: 200,
-    damping: 20,
-  });
+  const canTilt = mode === "ironman" && !reducedMotion;
 
-  const handleMouse = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    x.set(e.clientX - rect.left - rect.width / 2);
-    y.set(e.clientY - rect.top - rect.height / 2);
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!canTilt) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    setTilt({ x: -py * 8, y: px * 8 });
   };
 
-  const resetMouse = () => {
-    x.set(0);
-    y.set(0);
-  };
+  const hasLink = project.link && project.link !== "#";
+  const hasCode = project.github && project.github !== "#";
 
   return (
     <motion.div
-      ref={cardRef}
-      variants={fadeInUp}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-30px" }}
-      custom={index % 6}
-      className={`relative group ${featured ? "md:col-span-2 lg:col-span-2" : ""}`}
-      style={{ perspective: 800 }}
-      onMouseMove={handleMouse}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        resetMouse();
-      }}
+      layout
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      onMouseMove={onMove}
+      onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+      // Column span comes from .project-featured, not an inline style — an
+      // inline rule would beat the media query and span 2 on narrow screens too.
+      style={{ perspective: 1000 }}
+      className={featured ? "project-featured" : undefined}
     >
       <motion.div
-        className="glass h-full rounded-2xl relative overflow-hidden"
-        style={{
-          rotateX,
-          rotateY,
-          border: `1px solid ${project.color}20`,
-          transformStyle: "preserve-3d",
-        }}
+        animate={{ rotateX: tilt.x, rotateY: tilt.y }}
+        transition={{ type: "spring", stiffness: 180, damping: 18 }}
+        style={{ height: "100%", transformStyle: "preserve-3d" }}
       >
-        {/* Gradient top accent */}
-        <div
-          className="absolute top-0 left-0 right-0 h-[2px] z-10"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${project.color}, transparent)`,
-            opacity: hovered ? 1 : 0.3,
-            transition: "opacity 0.3s",
-          }}
-        />
-
-        {/* Project Screenshot */}
-        {project.image && (
+        <Panel
+          accent={project.color}
+          className="project-card"
+          style={{ height: "100%", padding: 0, overflow: "hidden" }}
+        >
+          {/* Thumbnail — .project-thumb carries the hologram treatment and the
+              featured side-by-side layout (globals.css). */}
           <div
-            className="relative w-full overflow-hidden"
-            style={{ height: featured ? 240 : 180 }}
+            className="project-thumb"
+            style={{
+              position: "relative",
+              width: "100%",
+              aspectRatio: featured ? "21 / 9" : "16 / 10",
+              overflow: "hidden",
+              borderBottom: "1px solid var(--border)",
+              background: "var(--bg-elev)",
+            }}
           >
-            <Image
-              src={project.image}
-              alt={project.name}
-              fill
-              className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
-              sizes={
-                featured
-                  ? "(max-width: 768px) 100vw, 66vw"
-                  : "(max-width: 768px) 100vw, 33vw"
-              }
-            />
-            {/* Overlay gradient */}
-            <div
-              className="absolute inset-0"
+            {project.image && featured && (
+              /* Blurred backdrop so the full screenshot can be shown with
+                 object-fit: contain instead of being cropped. */
+              <Image
+                src={project.image}
+                alt=""
+                aria-hidden="true"
+                fill
+                unoptimized={project.image.endsWith(".svg")}
+                sizes="60px"
+                style={{
+                  objectFit: "cover",
+                  filter: "blur(28px) brightness(0.45) saturate(1.2)",
+                  transform: "scale(1.15)",
+                }}
+              />
+            )}
+            {project.image ? (
+              <Image
+                src={project.image}
+                alt=""
+                fill
+                // next/image refuses to optimise SVG; serve it as-is.
+                unoptimized={project.image.endsWith(".svg")}
+                sizes={featured ? "(max-width: 900px) 100vw, 900px" : "(max-width: 900px) 100vw, 420px"}
+                style={{
+                  objectFit: featured ? "contain" : "cover",
+                  padding: featured ? 18 : 0,
+                }}
+              />
+            ) : (
+              /* No screenshot yet — a tinted monogram beats a broken image. */
+              <div
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "grid",
+                  placeItems: "center",
+                  background: `radial-gradient(circle at 50% 45%, ${project.color}22, transparent 70%)`,
+                }}
+              >
+                <span
+                  className="mono"
+                  style={{
+                    fontSize: featured ? "2.4rem" : "1.8rem",
+                    letterSpacing: "0.1em",
+                    color: project.color,
+                    opacity: 0.5,
+                  }}
+                >
+                  {project.name
+                    .replace(/[^A-Za-z ]/g, "")
+                    .split(" ")
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((w) => w[0].toUpperCase())
+                    .join("")}
+                </span>
+              </div>
+            )}
+
+            {/* Hologram scanlines — Iron Man only, via --chrome-opacity */}
+            <span
+              aria-hidden="true"
               style={{
-                background: `linear-gradient(180deg, transparent 40%, ${project.color}10 70%, var(--bg-primary) 100%)`,
+                position: "absolute",
+                inset: 0,
+                opacity: "var(--chrome-opacity)",
+                transition: "opacity var(--theme-fade) var(--ease)",
+                background:
+                  "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(79,195,247,0.09) 2px, rgba(79,195,247,0.09) 3px)",
+                mixBlendMode: "screen",
               }}
             />
-            {/* Category badge */}
-            <span
-              className="absolute top-3 left-3 text-[10px] px-2 py-1 rounded-full font-semibold z-10"
+
+            {featured && (
+              <span
+                className="mono"
+                style={{
+                  position: "absolute",
+                  top: 12,
+                  left: 12,
+                  zIndex: 2,
+                  padding: "4px 10px",
+                  borderRadius: 999,
+                  fontSize: "0.62rem",
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  background: "var(--accent)",
+                  color: "var(--accent-contrast)",
+                }}
+              >
+                {copy.projects.featuredLabel}
+              </span>
+            )}
+          </div>
+
+          {/* Body */}
+          <div className="project-body" style={{ padding: 22 }}>
+            <div
+              className="mono"
               style={{
-                background: "rgba(5, 5, 8, 0.7)",
-                backdropFilter: "blur(8px)",
-                color: project.color,
-                border: `1px solid ${project.color}40`,
+                fontSize: "0.66rem",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                color: "var(--text-dim)",
+                marginBottom: 9,
               }}
             >
               {project.category}
-            </span>
-          </div>
-        )}
+            </div>
 
-        {/* Content */}
-        <div className="relative z-10 p-5">
-          <div className="flex items-center justify-between mb-2">
             <h3
-              className={`${featured ? "text-xl" : "text-base"} font-bold`}
               style={{
-                fontFamily: "var(--font-display)",
-                color: "var(--text-primary)",
+                fontSize: featured ? "var(--step-2)" : "var(--step-1)",
+                margin: "0 0 10px",
               }}
             >
               {project.name}
             </h3>
-            <div className="flex gap-2">
-              {project.link !== "#" && (
+
+            <p
+              style={{
+                margin: "0 0 16px",
+                color: "var(--text-dim)",
+                fontSize: "0.9rem",
+                lineHeight: 1.6,
+                maxWidth: "58ch",
+              }}
+            >
+              {project.description}
+            </p>
+
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 7,
+                marginBottom: 18,
+              }}
+            >
+              {project.tags.map((tag) => (
+                <Tag key={tag}>{tag}</Tag>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: 18 }}>
+              {hasLink && (
                 <a
                   href={project.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Visit ${project.name}`}
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300"
+                  className="mono"
                   style={{
-                    border: `1px solid ${project.color}30`,
-                    color: "var(--text-muted)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = project.color;
-                    e.currentTarget.style.color = project.color;
-                    e.currentTarget.style.boxShadow = `0 0 12px ${project.color}40`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = `${project.color}30`;
-                    e.currentTarget.style.color = "var(--text-muted)";
-                    e.currentTarget.style.boxShadow = "none";
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "var(--accent)",
                   }}
                 >
-                  <ExternalLink size={12} />
+                  {copy.projects.liveLabel} <ArrowUpRight size={14} />
                 </a>
               )}
-              {project.github !== "#" && (
+              {hasCode && (
                 <a
                   href={project.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`GitHub for ${project.name}`}
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300"
+                  className="mono"
                   style={{
-                    border: `1px solid ${project.color}30`,
-                    color: "var(--text-muted)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = project.color;
-                    e.currentTarget.style.color = project.color;
-                    e.currentTarget.style.boxShadow = `0 0 12px ${project.color}40`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = `${project.color}30`;
-                    e.currentTarget.style.color = "var(--text-muted)";
-                    e.currentTarget.style.boxShadow = "none";
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: "0.72rem",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    color: "var(--text-dim)",
                   }}
                 >
-                  <Github size={12} />
+                  <Github size={14} /> {copy.projects.codeLabel}
                 </a>
               )}
             </div>
           </div>
-
-          <p
-            className="text-xs mb-3 leading-relaxed line-clamp-2"
-            style={{ color: "var(--text-muted)" }}
-          >
-            {project.description}
-          </p>
-
-          <div className="flex flex-wrap gap-1.5">
-            {project.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] px-2 py-0.5 rounded-full"
-                style={{
-                  background: `${project.color}10`,
-                  color: project.color,
-                  border: `1px solid ${project.color}20`,
-                  fontFamily: "var(--font-mono)",
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Hover glow */}
-        <div
-          className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at 50% 50%, ${project.color}06, transparent 70%)`,
-          }}
-        />
+        </Panel>
       </motion.div>
     </motion.div>
   );
 }
 
 export default function Projects() {
-  const [activeCategory, setActiveCategory] = useState("All");
+  const copy = useCopy();
+  const [active, setActive] = useState<string>("__all");
 
-  const filtered =
-    activeCategory === "All"
-      ? projects
-      : projects.filter((p) => p.category === activeCategory);
+  const categories = useMemo(
+    () => Array.from(new Set(projects.map((p) => p.category))),
+    [],
+  );
 
-  const featured = filtered.filter((p) => p.featured);
-  const others = filtered.filter((p) => !p.featured);
+  const visible = useMemo(
+    () =>
+      active === "__all"
+        ? projects
+        : projects.filter((p) => p.category === active),
+    [active],
+  );
+
+  const filters = [{ key: "__all", label: copy.projects.all }].concat(
+    categories.map((c) => ({ key: c, label: c })),
+  );
 
   return (
     <section id="projects" className="section-padding">
-      <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <SectionTitle
-          title="Projects"
-          subtitle="Things I've built that I'm proud of."
-        />
+      <div className="container">
+        <SectionHeading section="projects" />
 
-        {/* Category filter */}
-        <motion.div
-          className="flex flex-wrap justify-center gap-2 mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+        {/* Filters — styled as a targeting bar in Iron Man mode */}
+        <div
+          className="filter-bar"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 9,
+            marginBottom: 34,
+          }}
         >
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className="text-xs px-4 py-2 rounded-full font-medium transition-all duration-300"
-              style={{
-                fontFamily: "var(--font-mono)",
-                background:
-                  activeCategory === cat
-                    ? "var(--gradient-main)"
-                    : "rgba(0, 212, 255, 0.05)",
-                color: activeCategory === cat ? "#050508" : "var(--text-muted)",
-                border:
-                  activeCategory === cat
-                    ? "none"
-                    : "1px solid rgba(0, 212, 255, 0.15)",
-                cursor: "pointer",
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </motion.div>
+          {filters.map(({ key, label }) => {
+            const isActive = active === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setActive(key)}
+                aria-pressed={isActive}
+                className="mono filter-chip"
+                style={{
+                  padding: "8px 15px",
+                  borderRadius: 999,
+                  cursor: "pointer",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  border: `1px solid ${isActive ? "var(--accent)" : "var(--border)"}`,
+                  background: isActive ? "var(--accent-soft)" : "transparent",
+                  color: isActive ? "var(--accent)" : "var(--text-dim)",
+                  transition: "all 0.22s",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
 
-        <AnimatePresence mode="wait">
+        {/* Grid */}
+        <LayoutGroup>
           <motion.div
-            key={activeCategory}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+            layout
+            style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(min(100%, 320px), 1fr))",
+              gap: 20,
+            }}
           >
-            {featured.map((project, i) => (
-              <ProjectCard
-                key={project.name}
-                project={project}
-                index={i}
-                featured
-              />
-            ))}
-            {others.map((project, i) => (
-              <ProjectCard
-                key={project.name}
-                project={project}
-                index={i + featured.length}
-              />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {visible.map((project) => (
+                <ProjectCard
+                  key={`${project.name}-${project.image}`}
+                  project={project}
+                  featured={Boolean(project.featured) && active === "__all"}
+                />
+              ))}
+            </AnimatePresence>
           </motion.div>
-        </AnimatePresence>
+        </LayoutGroup>
       </div>
     </section>
   );
