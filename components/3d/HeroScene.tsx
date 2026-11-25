@@ -1,313 +1,456 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect } from "react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  type MotionValue,
+} from "framer-motion";
+import { personalInfo, projects, experiences } from "@/lib/data";
+import { useMode } from "@/components/mode/ModeProvider";
 
 /*  ───────────────────────────────────────────────────
-    Iron Man Helmet  –  SVG "suit-build" animation
-    
-    The helmet is drawn stroke-by-stroke, HUD brackets
-    & data readouts fade in around it, and the eyes
-    ignite at the end.
+    Hero emblem — an original arc-reactor reticle that
+    carries the "AS" monogram.
+
+    Assembles ring by ring: outer scale, coil segments
+    locking in one at a time, then the core ignites.
+    Layers sit at different depths and drift with the
+    cursor. When the primary CTA is hovered the outer
+    ring tightens and goes red: target locked.
+
+    Client-only (dynamically imported with ssr:false),
+    so trig here can't cause hydration mismatches.
     ─────────────────────────────────────────────────── */
 
-const draw = (delay: number, dur = 1.8) => ({
-  hidden: { pathLength: 0, opacity: 0 },
-  visible: {
-    pathLength: 1,
-    opacity: 1,
-    transition: { pathLength: { delay, duration: dur, ease: "easeInOut" }, opacity: { delay, duration: 0.3 } },
+const C = 200; // centre of the 400×400 viewBox
+const ARC = "var(--accent-3, #4fc3f7)";
+const GOLD = "var(--accent, #e8b23a)";
+const RED = "var(--accent-2, #c8102e)";
+
+const round = (n: number) => Math.round(n * 100) / 100;
+const polar = (r: number, deg: number) => {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [round(C + r * Math.cos(a)), round(C + r * Math.sin(a))] as const;
+};
+
+/** One trapezoidal coil segment between two radii and two angles. */
+function segmentPath(r1: number, r2: number, a1: number, a2: number) {
+  const [x1, y1] = polar(r2, a1);
+  const [x2, y2] = polar(r2, a2);
+  const [x3, y3] = polar(r1, a2);
+  const [x4, y4] = polar(r1, a1);
+  return `M${x1} ${y1} A${r2} ${r2} 0 0 1 ${x2} ${y2} L${x3} ${y3} A${r1} ${r1} 0 0 0 ${x4} ${y4}Z`;
+}
+
+/** An open arc of radius r from a1 to a2 degrees. */
+function arcPath(r: number, a1: number, a2: number) {
+  const [x1, y1] = polar(r, a1);
+  const [x2, y2] = polar(r, a2);
+  const large = a2 - a1 > 180 ? 1 : 0;
+  return `M${x1} ${y1} A${r} ${r} 0 ${large} 1 ${x2} ${y2}`;
+}
+
+const COILS = Array.from({ length: 12 }, (_, i) => {
+  const start = i * 30 + 3;
+  return { d: segmentPath(118, 146, start, start + 24), i };
+});
+
+const TICKS = Array.from({ length: 60 }, (_, i) => {
+  const deg = i * 6;
+  const major = i % 5 === 0;
+  const [x1, y1] = polar(major ? 178 : 183, deg);
+  const [x2, y2] = polar(190, deg);
+  return { x1, y1, x2, y2, major, key: i };
+});
+
+/* ─── Readouts ─── */
+
+const readouts = [
+  {
+    pos: { top: 0, left: 0 },
+    align: "left" as const,
+    label: "Systems deployed",
+    value: String(projects.length).padStart(2, "0"),
   },
-});
+  {
+    pos: { top: 0, right: 0 },
+    align: "right" as const,
+    label: "Last mission",
+    value: experiences[0].company,
+  },
+  {
+    pos: { bottom: 0, left: 0 },
+    align: "left" as const,
+    label: "Base",
+    value: personalInfo.location.split(",")[0] + ", IN",
+  },
+  {
+    pos: { bottom: 0, right: 0 },
+    align: "right" as const,
+    label: "Status",
+    value: "Open to roles",
+    live: true,
+  },
+];
 
-const fadeIn = (delay: number) => ({
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { delay, duration: 0.5 } },
-});
-
-const slideIn = (delay: number, x = 0, y = 0) => ({
-  hidden: { opacity: 0, x, y },
-  visible: { opacity: 1, x: 0, y: 0, transition: { delay, duration: 0.6, ease: "easeOut" } },
-});
-
-export default function HeroScene() {
+function Readout({
+  r,
+  delay,
+}: {
+  r: (typeof readouts)[number];
+  delay: number;
+}) {
+  const left = r.align === "left";
   return (
-    <div className="relative w-full h-full flex items-center justify-center select-none">
-      {/* Outer rotating ring */}
-      <motion.div
-        className="absolute w-[340px] h-[340px] md:w-[440px] md:h-[440px] rounded-full"
+    <motion.div
+      className="mono"
+      initial={{ opacity: 0, x: left ? -14 : 14 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay, duration: 0.6, ease: "easeOut" }}
+      style={{
+        position: "absolute",
+        ...r.pos,
+        textAlign: r.align,
+        fontSize: 11,
+        lineHeight: 1.5,
+        letterSpacing: "0.14em",
+        textTransform: "uppercase",
+        padding: left ? "10px 0 10px 14px" : "10px 14px 10px 0",
+        borderLeft: left ? `1px solid ${GOLD}` : undefined,
+        borderRight: left ? undefined : `1px solid ${GOLD}`,
+        maxWidth: 200,
+      }}
+    >
+      <div style={{ color: "var(--text-dim)" }}>{r.label}</div>
+      <div
         style={{
-          border: "1px solid rgba(255, 215, 0, 0.08)",
+          color: r.live ? ARC : "var(--text)",
+          display: "flex",
+          alignItems: "center",
+          gap: 7,
+          justifyContent: left ? "flex-start" : "flex-end",
         }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
       >
-        {/* Tick marks */}
-        {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
-          <div
-            key={deg}
-            className="absolute w-[1px] h-3"
+        {r.live && (
+          <span
+            aria-hidden="true"
             style={{
-              background: "var(--accent-gold)",
-              opacity: 0.3,
-              top: 0,
-              left: "50%",
-              transformOrigin: "50% calc(170px)",
-              transform: `rotate(${deg}deg)`,
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: ARC,
+              boxShadow: `0 0 8px ${ARC}`,
+              animation: "arc-pulse 2s ease-in-out infinite",
             }}
           />
-        ))}
-      </motion.div>
+        )}
+        {r.value}
+      </div>
+    </motion.div>
+  );
+}
 
-      {/* Inner rotating ring (opposite direction) */}
+/* ─── Parallax layer ─── */
+
+function Layer({
+  depth,
+  mx,
+  my,
+  children,
+}: {
+  depth: number;
+  mx: MotionValue<number>;
+  my: MotionValue<number>;
+  children: React.ReactNode;
+}) {
+  const x = useTransform(mx, (v) => v * depth);
+  const y = useTransform(my, (v) => v * depth);
+  return (
+    <motion.g style={{ x, y }}>
+      {children}
+    </motion.g>
+  );
+}
+
+export default function HeroScene({ locked = false }: { locked?: boolean }) {
+  const { reducedMotion } = useMode();
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const mx = useSpring(rawX, { stiffness: 60, damping: 18 });
+  const my = useSpring(rawY, { stiffness: 60, damping: 18 });
+
+  useEffect(() => {
+    if (reducedMotion) return;
+    const onMove = (e: PointerEvent) => {
+      rawX.set((e.clientX / window.innerWidth - 0.5) * 2);
+      rawY.set((e.clientY / window.innerHeight - 0.5) * 2);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [reducedMotion, rawX, rawY]);
+
+  const spin = (duration: number, dir = 1) =>
+    reducedMotion
+      ? {}
+      : {
+          animate: { rotate: 360 * dir },
+          transition: { duration, repeat: Infinity, ease: "linear" as const },
+        };
+
+  return (
+    <div
+      className="relative w-full h-full flex items-center justify-center select-none"
+      aria-hidden="true"
+    >
+      {readouts.map((r, i) => (
+        <Readout key={r.label} r={r} delay={1.6 + i * 0.12} />
+      ))}
+
+      {/* Target-lock label */}
       <motion.div
-        className="absolute w-[300px] h-[300px] md:w-[390px] md:h-[390px] rounded-full"
+        className="mono"
+        initial={false}
+        animate={{ opacity: locked ? 1 : 0, y: locked ? 0 : 6 }}
+        transition={{ duration: 0.2 }}
         style={{
-          border: "1px dashed rgba(79, 195, 247, 0.1)",
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, calc(-50% + min(23vw, 230px)))",
+          fontSize: 11,
+          letterSpacing: "0.3em",
+          color: RED,
+          whiteSpace: "nowrap",
         }}
-        animate={{ rotate: -360 }}
-        transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-      />
-
-      {/* ── SVG Helmet ── */}
-      <motion.svg
-        viewBox="0 0 300 340"
-        className="w-[240px] h-[280px] md:w-[300px] md:h-[340px] relative z-10"
-        initial="hidden"
-        animate="visible"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
       >
-        {/* ─── Outer helmet shell ─── */}
-        <motion.path
-          d="M150 20 C80 20, 30 80, 30 160 C30 220, 55 260, 90 290 L120 310 L150 320 L180 310 L210 290 C245 260, 270 220, 270 160 C270 80, 220 20, 150 20Z"
-          stroke="var(--accent-gold)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          variants={draw(0.5, 2.5)}
-        />
+        TARGET LOCKED
+      </motion.div>
 
-        {/* ─── Faceplate divider ─── */}
-        <motion.path
-          d="M90 180 L120 200 L150 210 L180 200 L210 180"
-          stroke="var(--accent-red)"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          variants={draw(1.2, 1.5)}
-        />
+      <svg
+        viewBox="0 0 400 400"
+        style={{
+          width: "min(100%, 440px)",
+          height: "auto",
+          overflow: "visible",
+        }}
+      >
+        <defs>
+          <linearGradient id="emblem-gold" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#f7dc8a" />
+            <stop offset="0.38" stopColor="#e8b23a" />
+            <stop offset="0.66" stopColor="#9e6d1c" />
+            <stop offset="1" stopColor="#f0c860" />
+          </linearGradient>
+          <radialGradient id="emblem-core" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stopColor="#e9f9ff" />
+            <stop offset="0.35" stopColor="#4fc3f7" stopOpacity="0.85" />
+            <stop offset="0.75" stopColor="#0d4f6e" stopOpacity="0.55" />
+            <stop offset="1" stopColor="#08090d" stopOpacity="0.9" />
+          </radialGradient>
+          <radialGradient id="emblem-bleed" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0" stopColor="#4fc3f7" stopOpacity="0.22" />
+            <stop offset="0.5" stopColor="#c8102e" stopOpacity="0.08" />
+            <stop offset="1" stopColor="#000" stopOpacity="0" />
+          </radialGradient>
+          <filter id="emblem-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
 
-        {/* ─── Forehead plate ─── */}
-        <motion.path
-          d="M100 100 L150 70 L200 100 L190 140 L150 155 L110 140Z"
-          stroke="var(--accent-gold)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          variants={draw(1.5, 1.8)}
-        />
-
-        {/* ─── Left cheek plate ─── */}
-        <motion.path
-          d="M50 150 L75 120 L110 140 L100 180 L70 190Z"
-          stroke="var(--accent-gold)"
-          strokeWidth="0.8"
-          strokeLinecap="round"
-          variants={draw(1.8, 1.5)}
-        />
-
-        {/* ─── Right cheek plate ─── */}
-        <motion.path
-          d="M250 150 L225 120 L190 140 L200 180 L230 190Z"
-          stroke="var(--accent-gold)"
-          strokeWidth="0.8"
-          strokeLinecap="round"
-          variants={draw(1.8, 1.5)}
-        />
-
-        {/* ─── Chin / jaw ─── */}
-        <motion.path
-          d="M100 220 L120 240 L150 250 L180 240 L200 220"
-          stroke="var(--accent-red)"
-          strokeWidth="1"
-          strokeLinecap="round"
-          variants={draw(2.2, 1.5)}
-        />
-
-        {/* ─── Jaw side lines ─── */}
-        <motion.path
-          d="M70 190 L90 220 L100 250 L120 270"
-          stroke="var(--accent-gold)"
-          strokeWidth="0.7"
-          strokeLinecap="round"
-          variants={draw(2.5, 1.2)}
-        />
-        <motion.path
-          d="M230 190 L210 220 L200 250 L180 270"
-          stroke="var(--accent-gold)"
-          strokeWidth="0.7"
-          strokeLinecap="round"
-          variants={draw(2.5, 1.2)}
-        />
-
-        {/* ─── Center line (symmetry) ─── */}
-        <motion.line
-          x1="150" y1="70" x2="150" y2="250"
-          stroke="rgba(79, 195, 247, 0.15)"
-          strokeWidth="0.5"
-          strokeDasharray="3 4"
-          variants={draw(1, 2)}
-        />
-
-        {/* ─── Left eye ─── */}
-        <motion.path
-          d="M100 158 L115 148 L140 155 L130 168 L105 168Z"
-          stroke="var(--accent-arc)"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-          fill="rgba(79, 195, 247, 0.0)"
-          variants={draw(3, 0.8)}
-        />
-        {/* Left eye IGNITE */}
-        <motion.path
-          d="M100 158 L115 148 L140 155 L130 168 L105 168Z"
-          fill="rgba(79, 195, 247, 0.25)"
-          stroke="none"
-          variants={fadeIn(3.8)}
-          style={{ filter: "blur(2px)" }}
-        />
-
-        {/* ─── Right eye ─── */}
-        <motion.path
-          d="M200 158 L185 148 L160 155 L170 168 L195 168Z"
-          stroke="var(--accent-arc)"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-          fill="rgba(79, 195, 247, 0.0)"
-          variants={draw(3, 0.8)}
-        />
-        {/* Right eye IGNITE */}
-        <motion.path
-          d="M200 158 L185 148 L160 155 L170 168 L195 168Z"
-          fill="rgba(79, 195, 247, 0.25)"
-          stroke="none"
-          variants={fadeIn(3.8)}
-          style={{ filter: "blur(2px)" }}
-        />
-
-        {/* ─── Arc reactor chest hint ─── */}
+        {/* Ambient bleed */}
         <motion.circle
-          cx="150" cy="330"
-          r="12"
-          stroke="var(--accent-arc)"
-          strokeWidth="1"
-          variants={draw(3.5, 1)}
-        />
-        <motion.circle
-          cx="150" cy="330"
-          r="6"
-          fill="rgba(79, 195, 247, 0.3)"
-          stroke="none"
-          variants={fadeIn(4.2)}
-          style={{ filter: "blur(3px)" }}
+          cx={C}
+          cy={C}
+          r={200}
+          fill="url(#emblem-bleed)"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 1.4 }}
         />
 
-        {/* ─── Detail panel lines ─── */}
-        <motion.line x1="75" y1="120" x2="55" y2="100" stroke="rgba(255,215,0,0.3)" strokeWidth="0.5" variants={draw(2.8, 0.8)} />
-        <motion.line x1="225" y1="120" x2="245" y2="100" stroke="rgba(255,215,0,0.3)" strokeWidth="0.5" variants={draw(2.8, 0.8)} />
-        <motion.line x1="110" y1="140" x2="90" y2="130" stroke="rgba(255,215,0,0.2)" strokeWidth="0.4" variants={draw(2.9, 0.6)} />
-        <motion.line x1="190" y1="140" x2="210" y2="130" stroke="rgba(255,215,0,0.2)" strokeWidth="0.4" variants={draw(2.9, 0.6)} />
-      </motion.svg>
+        {/* Outer scale — tightens and turns red on target lock */}
+        <Layer depth={14} mx={mx} my={my}>
+          <motion.g
+            style={{ originX: "50%", originY: "50%", transformBox: "fill-box" }}
+            initial={{ opacity: 0, scale: 1.15 }}
+            animate={{ opacity: 1, scale: locked ? 0.93 : 1 }}
+            transition={{ duration: locked ? 0.25 : 0.9, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <motion.g
+              style={{ originX: "50%", originY: "50%", transformBox: "fill-box" }}
+              {...spin(80)}
+            >
+              <circle
+                cx={C}
+                cy={C}
+                r={190}
+                fill="none"
+                stroke={locked ? RED : GOLD}
+                strokeOpacity={locked ? 0.7 : 0.22}
+                style={{ transition: "stroke 0.25s, stroke-opacity 0.25s" }}
+              />
+              {TICKS.map((t) => (
+                <line
+                  key={t.key}
+                  x1={t.x1}
+                  y1={t.y1}
+                  x2={t.x2}
+                  y2={t.y2}
+                  stroke={locked ? RED : GOLD}
+                  strokeOpacity={t.major ? 0.7 : 0.3}
+                  strokeWidth={t.major ? 1.4 : 1}
+                  style={{ transition: "stroke 0.25s" }}
+                />
+              ))}
+            </motion.g>
+          </motion.g>
+        </Layer>
 
-      {/* ── HUD Data Readouts ── */}
+        {/* Cyan sweep arcs */}
+        <Layer depth={9} mx={mx} my={my}>
+          <motion.g
+            style={{ originX: "50%", originY: "50%", transformBox: "fill-box" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+          >
+            <motion.g
+              style={{ originX: "50%", originY: "50%", transformBox: "fill-box" }}
+              {...spin(36, -1)}
+            >
+              {[0, 120, 240].map((a) => (
+                <path
+                  key={a}
+                  d={arcPath(165, a, a + 72)}
+                  fill="none"
+                  stroke={ARC}
+                  strokeOpacity={0.55}
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                />
+              ))}
+              <circle
+                cx={C}
+                cy={C}
+                r={165}
+                fill="none"
+                stroke={ARC}
+                strokeOpacity={0.12}
+                strokeDasharray="2 6"
+              />
+            </motion.g>
+          </motion.g>
+        </Layer>
 
-      {/* Top-left bracket + label */}
-      <motion.div
-        className="absolute top-[10%] left-[5%] md:left-[8%]"
-        variants={slideIn(2.5, -30, 0)}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="flex items-start gap-2">
-          <div style={{ borderLeft: "1px solid var(--accent-arc)", borderTop: "1px solid var(--accent-arc)", width: 16, height: 16, opacity: 0.5 }} />
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--accent-arc)", opacity: 0.7, lineHeight: 1.6 }}>
-            <div>MARK LXXXV</div>
-            <div style={{ color: "var(--accent-gold)" }}>NANO-TECH</div>
-          </div>
-        </div>
-      </motion.div>
+        {/* Coil ring — segments lock in one by one */}
+        <Layer depth={5} mx={mx} my={my}>
+          <motion.g
+            style={{ originX: "50%", originY: "50%", transformBox: "fill-box" }}
+            {...spin(120)}
+          >
+            {COILS.map(({ d, i }) => (
+              <motion.path
+                key={i}
+                d={d}
+                fill="url(#emblem-gold)"
+                stroke="#08090d"
+                strokeWidth={1.5}
+                initial={{ opacity: 0, scale: 1.12 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{ originX: "200px", originY: "200px" }}
+                transition={{
+                  delay: 0.6 + i * 0.06,
+                  duration: 0.45,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              />
+            ))}
+          </motion.g>
+          <circle
+            cx={C}
+            cy={C}
+            r={112}
+            fill="#0b0c12"
+            stroke={GOLD}
+            strokeOpacity={0.35}
+          />
+        </Layer>
 
-      {/* Top-right bracket + label */}
-      <motion.div
-        className="absolute top-[10%] right-[5%] md:right-[8%] text-right"
-        variants={slideIn(2.7, 30, 0)}
-        initial="hidden"
-        animate="visible"
-      >
-        <div className="flex items-start justify-end gap-2">
-          <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--accent-arc)", opacity: 0.7, lineHeight: 1.6 }}>
-            <div>STATUS: <span style={{ color: "var(--accent-gold)" }}>ASSEMBLING</span></div>
-            <div>INTEGRITY: 100%</div>
-          </div>
-          <div style={{ borderRight: "1px solid var(--accent-arc)", borderTop: "1px solid var(--accent-arc)", width: 16, height: 16, opacity: 0.5 }} />
-        </div>
-      </motion.div>
-
-      {/* Bottom-left data */}
-      <motion.div
-        className="absolute bottom-[12%] left-[5%] md:left-[8%]"
-        variants={slideIn(3.2, -20, 10)}
-        initial="hidden"
-        animate="visible"
-      >
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-muted)", opacity: 0.5, lineHeight: 1.8 }}>
-          <div>PWR ████████ <span style={{ color: "var(--accent-gold)" }}>98%</span></div>
-          <div>SYS ██████░░ <span style={{ color: "var(--accent-arc)" }}>76%</span></div>
-        </div>
-      </motion.div>
-
-      {/* Bottom-right targeting */}
-      <motion.div
-        className="absolute bottom-[12%] right-[5%] md:right-[8%] text-right"
-        variants={slideIn(3.4, 20, 10)}
-        initial="hidden"
-        animate="visible"
-      >
-        <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--text-muted)", opacity: 0.5, lineHeight: 1.8 }}>
-          <div>LAT: 26.8467°N</div>
-          <div>LON: 80.9462°E</div>
-        </div>
-      </motion.div>
-
-      {/* ── Eye ignition glow effect ── */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 3.8, duration: 0.5 }}
-      >
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[55%] w-[120px] h-[40px] md:w-[150px] md:h-[50px] rounded-full"
-          style={{
-            background: "radial-gradient(ellipse, rgba(79,195,247,0.15) 0%, transparent 70%)",
-            filter: "blur(15px)",
-          }}
-        />
-      </motion.div>
-
-      {/* ── Scanning lines that animate after build ── */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none overflow-hidden rounded-full"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.3 }}
-        transition={{ delay: 4, duration: 1 }}
-      >
-        <motion.div
-          className="absolute left-0 right-0 h-[1px]"
-          style={{
-            background: "linear-gradient(90deg, transparent 10%, var(--accent-arc) 50%, transparent 90%)",
-          }}
-          animate={{ top: ["0%", "100%"] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 4.5 }}
-        />
-      </motion.div>
+        {/* Core + monogram */}
+        <Layer depth={2} mx={mx} my={my}>
+          <motion.g
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0.5, 1, 0.8, 1] }}
+            transition={{
+              delay: 1.5,
+              duration: 1.1,
+              times: [0, 0.18, 0.32, 0.52, 0.72, 1],
+            }}
+          >
+            <circle
+              cx={C}
+              cy={C}
+              r={96}
+              fill="url(#emblem-core)"
+              filter="url(#emblem-glow)"
+            />
+            <circle
+              cx={C}
+              cy={C}
+              r={96}
+              fill="none"
+              stroke={ARC}
+              strokeOpacity={0.8}
+              strokeWidth={1.5}
+            />
+            <circle
+              cx={C}
+              cy={C}
+              r={72}
+              fill="none"
+              stroke="#e9f9ff"
+              strokeOpacity={0.25}
+              strokeDasharray="1 5"
+            />
+            <text
+              x={C}
+              y={C + 4}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill="#f4fcff"
+              filter="url(#emblem-glow)"
+              style={{
+                fontFamily: "var(--font-display-active)",
+                fontWeight: 800,
+                fontSize: 64,
+                letterSpacing: 4,
+              }}
+            >
+              AS
+            </text>
+            <text
+              x={C}
+              y={C + 50}
+              textAnchor="middle"
+              fill="#0b2433"
+              style={{
+                fontFamily: "var(--font-mono-active)",
+                fontSize: 10,
+                letterSpacing: 4,
+              }}
+            >
+              SETH · 01
+            </text>
+          </motion.g>
+        </Layer>
+      </svg>
     </div>
   );
 }

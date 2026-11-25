@@ -8,6 +8,8 @@ interface TerminalTextProps {
   deleteSpeed?: number;
   pauseTime?: number;
   className?: string;
+  /** Small label before the typed text, e.g. "J.A.R.V.I.S. >". Omit for none. */
+  prefix?: string;
 }
 
 export default function TerminalText({
@@ -16,6 +18,7 @@ export default function TerminalText({
   deleteSpeed = 40,
   pauseTime = 1500,
   className = "",
+  prefix,
 }: TerminalTextProps) {
   const [displayText, setDisplayText] = useState("");
   const [textIndex, setTextIndex] = useState(0);
@@ -45,20 +48,29 @@ export default function TerminalText({
   }, [tick, isDeleting, deleteSpeed, speed]);
 
   return (
-    <span className={className} style={{ fontFamily: "var(--font-mono)" }}>
-      <span style={{ color: "var(--accent-arc)", opacity: 0.7 }}>
-        J.A.R.V.I.S. {">"}{" "}
-      </span>
-      <span style={{ color: "var(--accent-gold)" }}>{displayText}</span>
+    <span
+      className={className}
+      style={{ fontFamily: "var(--font-mono-active)" }}
+    >
+      {prefix && (
+        <span style={{ color: "var(--accent-3, var(--accent))", opacity: 0.7 }}>
+          {prefix}{" "}
+        </span>
+      )}
+      <span style={{ color: "var(--accent)" }}>{displayText}</span>
       <span
-        className="inline-block w-[2px] h-[1.1em] ml-1 align-middle"
         style={{
-          background: "var(--accent-arc)",
-          animation: "blink 1s step-end infinite",
+          display: "inline-block",
+          width: 2,
+          height: "1.1em",
+          marginLeft: 4,
+          verticalAlign: "middle",
+          background: "var(--accent-3, var(--accent))",
+          animation: "tt-blink 1s step-end infinite",
         }}
       />
       <style jsx>{`
-        @keyframes blink {
+        @keyframes tt-blink {
           50% {
             opacity: 0;
           }

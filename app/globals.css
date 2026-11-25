@@ -1,29 +1,140 @@
 @import "tailwindcss";
 
-/* ─── Iron Man Design Tokens ─── */
+/* ═══════════════════════════════════════════════════════════
+   DESIGN TOKENS
+
+   Every mode-specific value is defined in BOTH mode blocks.
+   Nothing inherits a color across modes — that is how a stale
+   accent leaks from one theme into the other.
+
+   Components reference tokens only. The only files allowed to
+   name a literal color are this one and the Canvas/WebGL
+   layers, which cannot read custom properties cheaply.
+   ═══════════════════════════════════════════════════════════ */
+
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-surface: #111119;
-  --bg-card: rgba(17, 17, 25, 0.75);
-  --accent-red: #e62429;
-  --accent-gold: #ffd700;
-  --accent-arc: #4fc3f7;
-  --accent-orange: #ff6b35;
-  --text-primary: #f5f0e8;
-  --text-muted: #8a8090;
-  --gradient-main: linear-gradient(135deg, #e62429, #ffd700);
-  --gradient-arc: linear-gradient(135deg, #4fc3f7, #e62429);
-  --gradient-gold: linear-gradient(135deg, #ffd700, #ff6b35);
-  --font-display: "Orbitron", sans-serif;
-  --font-body: "Rajdhani", sans-serif;
-  --font-mono: "Share Tech Mono", monospace;
-  --border-glow: rgba(255, 215, 0, 0.12);
-  --glow-red: 0 0 20px rgba(230, 36, 41, 0.4);
-  --glow-gold: 0 0 20px rgba(255, 215, 0, 0.3);
-  --glow-arc: 0 0 20px rgba(79, 195, 247, 0.4);
+  /* Shared, mode-independent */
+  --container: 1200px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --theme-fade: 0.6s;
+
+  /* Type scale — fluid, shared by both modes */
+  --step--1: clamp(0.78rem, 0.75rem + 0.15vw, 0.86rem);
+  --step-0: clamp(0.95rem, 0.9rem + 0.25vw, 1.05rem);
+  --step-1: clamp(1.15rem, 1.05rem + 0.5vw, 1.4rem);
+  --step-2: clamp(1.45rem, 1.25rem + 1vw, 2rem);
+  --step-3: clamp(1.9rem, 1.5rem + 2vw, 3rem);
+  --step-4: clamp(2.5rem, 1.6rem + 4.5vw, 4.5rem);
+  --step-5: clamp(2.75rem, 1.5rem + 8vw, 6rem);
 }
 
-/* ─── Reset & Base ─── */
+/* ─── Default mode — Editorial Dark ───
+   Also applied on :root so a missing data-mode attribute can never leave
+   tokens undefined (which renders the noise layer at full opacity). */
+:root,
+[data-mode="default"] {
+  --bg: #0a0a0b;
+  --bg-elev: #121214;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text: #ece9e4;
+  --text-dim: #9a9691;
+  --accent: #6366f1;
+  --accent-2: #818cf8;
+  --accent-3: #6366f1;
+  --accent-contrast: #0a0a0b;
+  --accent-soft: rgba(99, 102, 241, 0.12);
+
+  --radius: 12px;
+  --glow: none;
+  --glow-soft: none;
+
+  --font-display-active: var(--font-display);
+  --font-body-active: var(--font-body);
+  --font-mono-active: var(--font-mono);
+  --font-ui-active: var(--font-mono);
+  --ui-size: 0.8rem;
+  --ui-weight: 400;
+  --accent-fill: var(--accent);
+  --spotlight: rgba(255, 255, 255, 0.045);
+  --title-size: var(--step-4);
+  --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --gold-metal: linear-gradient(135deg, var(--accent-2), var(--accent));
+  --heading-transform: none;
+  --heading-tracking: -0.03em;
+  --heading-weight: 600;
+  --eyebrow-tracking: 0.18em;
+
+  --chrome-opacity: 0;
+  --noise-opacity: 0.022;
+  --grid-opacity: 0;
+}
+
+/* ─── Iron Man mode — Stark HUD ─── */
+[data-mode="ironman"] {
+  /* Colour roles — each accent has exactly one job:
+     gold  = frames and structure
+     red   = emphasis and active states
+     cyan  = light: live status, data, the cursor */
+  --bg: #08090d;
+  --bg-elev: #10121a;
+  --surface: linear-gradient(180deg, rgba(22, 24, 34, 0.86), rgba(14, 15, 22, 0.86));
+  --surface-hover: linear-gradient(180deg, rgba(28, 30, 42, 0.94), rgba(16, 17, 25, 0.94));
+  --surface-raised: rgba(30, 32, 45, 0.9);
+  --border: rgba(232, 178, 58, 0.14);
+  --border-strong: rgba(232, 178, 58, 0.42);
+  --text: #f3eee6;
+  --text-dim: #9a93a3;
+  --accent: #e8b23a;
+  --accent-2: #c8102e;
+  --accent-3: #4fc3f7;
+  --accent-contrast: #0b0b0f;
+  --accent-soft: rgba(232, 178, 58, 0.1);
+  --arc-soft: rgba(79, 195, 247, 0.1);
+
+  --gold-metal: linear-gradient(
+    135deg,
+    #f7dc8a 0%,
+    #e8b23a 34%,
+    #a8761f 62%,
+    #f0c860 100%
+  );
+
+  --radius: 4px;
+  --glow: 0 0 22px rgba(232, 178, 58, 0.28);
+  --glow-soft: 0 0 34px rgba(200, 16, 46, 0.14);
+  --glow-arc: 0 0 18px rgba(79, 195, 247, 0.45);
+  --panel-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+
+  --font-display-active: var(--font-display-iron);
+  /* Exo 2 for paragraphs; Rajdhani for labels, nav and buttons. */
+  --font-body-active: var(--font-prose-iron);
+  --font-ui-active: var(--font-body-iron);
+  --ui-size: 0.9rem;
+  --ui-weight: 600;
+  --accent-fill: var(--gold-metal);
+  --spotlight: rgba(79, 195, 247, 0.08);
+  --font-mono-active: var(--font-mono-iron);
+  /* Orbitron is wide — cap section titles so they don't fill the measure. */
+  --title-size: clamp(1.9rem, 1.3rem + 2.6vw, 3.25rem);
+  --heading-transform: uppercase;
+  --heading-tracking: 0.05em;
+  --heading-weight: 700;
+  --eyebrow-tracking: 0.3em;
+
+  --chrome-opacity: 1;
+  --noise-opacity: 0.03;
+  --grid-opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════════════ */
+
 *,
 *::before,
 *::after {
@@ -33,46 +144,43 @@
 html {
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: var(--accent-red) var(--bg-primary);
+  scrollbar-color: var(--accent) var(--bg);
 }
 
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body-active);
+  font-size: var(--step-0);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  transition:
+    background-color var(--theme-fade) var(--ease),
+    color var(--theme-fade) var(--ease);
 }
 
-/* ─── Custom Scrollbar ─── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--accent-red), var(--accent-gold));
-  border-radius: 3px;
-}
-
-/* ─── Typography ─── */
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display-active);
+  font-weight: var(--heading-weight);
+  text-transform: var(--heading-transform);
+  letter-spacing: var(--heading-tracking);
+  line-height: 1.05;
+  margin: 0;
 }
 
-code, pre, .mono {
-  font-family: var(--font-mono);
+code,
+pre,
+.mono {
+  font-family: var(--font-mono-active);
 }
 
 a {
@@ -80,242 +188,298 @@ a {
   text-decoration: none;
 }
 
-/* ─── Selection ─── */
-::selection {
-  background: rgba(230, 36, 41, 0.35);
-  color: var(--accent-gold);
+button {
+  font-family: inherit;
 }
 
-/* ─── Noise Overlay ─── */
+::selection {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════════════════════ */
+
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  width: 100%;
+  padding-inline: 24px;
+}
+
+.section-padding {
+  padding-block: 120px;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding-block: 80px;
+  }
+  .container {
+    padding-inline: 18px;
+  }
+}
+
+section {
+  position: relative;
+  /* Decorations (heading lock brackets, glows) may poke past the edge on
+     narrow screens; clip rather than widen the page. clip, not hidden, so
+     no scroll container is created. */
+  overflow-x: clip;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TYPE UTILITIES
+   ═══════════════════════════════════════════════════════════ */
+
+.eyebrow {
+  font-family: var(--font-mono-active);
+  font-size: var(--step--1);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.accent-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--accent);
+  text-transform: none;
+}
+
+.text-dim {
+  color: var(--text-dim);
+}
+
+.btn-primary {
+  background: var(--accent-fill);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Metallic gold text — Iron Man only; default falls back to its gradient. */
+.gold-text {
+  background: var(--gold-metal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PANEL
+   The shared surface. Corner brackets and the top accent are
+   always in the DOM and revealed by --chrome-opacity, so Panel
+   never branches on mode and the chrome fades with the theme.
+   ═══════════════════════════════════════════════════════════ */
+
+.panel {
+  position: relative;
+  background: var(--surface);
+  box-shadow: var(--panel-highlight);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition:
+    background-color 0.25s var(--ease),
+    border-color 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+
+.panel-interactive:hover {
+  background: var(--surface-hover);
+  border-color: var(--panel-accent, var(--border-strong));
+  box-shadow: var(--panel-highlight), var(--glow-soft);
+}
+
+/* Cursor spotlight on interactive panels (--mx/--my set by Panel). */
+.panel-interactive::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+  background: radial-gradient(
+    360px circle at var(--mx, 50%) var(--my, 50%),
+    var(--spotlight),
+    transparent 65%
+  );
+}
+.panel-interactive:hover::before {
+  opacity: 1;
+}
+@media (hover: none) {
+  .panel-interactive::before {
+    display: none;
+  }
+}
+
+.panel-chrome {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--chrome-opacity);
+  transition: opacity var(--theme-fade) var(--ease);
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+/* Top accent rule */
+.panel-chrome i:nth-child(1) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--panel-accent, var(--accent-2)),
+    var(--accent),
+    transparent
+  );
+  opacity: 0.7;
+}
+
+/* Corner brackets */
+.panel-chrome i:nth-child(2),
+.panel-chrome i:nth-child(3) {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+}
+.panel-chrome i:nth-child(2) {
+  top: 0;
+  left: 0;
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+.panel-chrome i:nth-child(3) {
+  bottom: 0;
+  right: 0;
+  border-bottom: 1px solid var(--accent-2);
+  border-right: 1px solid var(--accent-2);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL CHROME
+   Driven by --chrome-opacity so it fades with the mode
+   transition instead of mounting and unmounting.
+   ═══════════════════════════════════════════════════════════ */
+
 .noise-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
   pointer-events: none;
-  opacity: 0.03;
+  opacity: var(--noise-opacity);
+  transition: opacity var(--theme-fade) var(--ease);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px;
 }
 
-/* ─── Scan Lines Overlay ─── */
 .scan-lines {
   position: fixed;
   inset: 0;
   z-index: 9998;
   pointer-events: none;
+  opacity: var(--chrome-opacity);
+  transition: opacity var(--theme-fade) var(--ease);
   background: repeating-linear-gradient(
     0deg,
     transparent,
     transparent 2px,
-    rgba(79, 195, 247, 0.015) 2px,
-    rgba(79, 195, 247, 0.015) 4px
+    rgba(79, 195, 247, 0.02) 2px,
+    rgba(79, 195, 247, 0.02) 4px
   );
 }
 
-/* ─── Glass Card (Stark Tech) ─── */
-.glass {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-glow);
-  border-radius: 16px;
-  position: relative;
-}
-
-.glass-hover:hover {
-  border-color: rgba(255, 215, 0, 0.35);
-  box-shadow: var(--glow-gold);
-}
-
-/* ─── HUD Corner Brackets ─── */
-.hud-corners {
-  position: relative;
-}
-.hud-corners::before,
-.hud-corners::after {
-  content: "";
-  position: absolute;
-  width: 16px;
-  height: 16px;
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
   pointer-events: none;
-  opacity: 0.5;
-  transition: opacity 0.3s ease;
-}
-.hud-corners::before {
-  top: -1px;
-  left: -1px;
-  border-top: 2px solid var(--accent-gold);
-  border-left: 2px solid var(--accent-gold);
-}
-.hud-corners::after {
-  bottom: -1px;
-  right: -1px;
-  border-bottom: 2px solid var(--accent-red);
-  border-right: 2px solid var(--accent-red);
-}
-.hud-corners:hover::before,
-.hud-corners:hover::after {
-  opacity: 1;
+  opacity: var(--chrome-opacity);
+  transition: opacity var(--theme-fade) var(--ease);
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
 }
 
-/* ─── Gradient Text ─── */
-.gradient-text {
-  background: var(--gradient-main);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-text-arc {
-  background: var(--gradient-arc);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ─── Neon Glow (Arc Reactor) ─── */
-.neon-glow {
-  text-shadow:
-    0 0 10px rgba(79, 195, 247, 0.5),
-    0 0 40px rgba(79, 195, 247, 0.2);
-}
-
-.gold-glow {
-  text-shadow:
-    0 0 10px rgba(255, 215, 0, 0.5),
-    0 0 40px rgba(255, 215, 0, 0.2);
-}
-
-/* ─── Section Spacing ─── */
-section {
-  position: relative;
-}
-
-.section-padding {
-  padding: 120px 24px;
-}
-
-@media (max-width: 768px) {
-  .section-padding {
-    padding: 80px 16px;
-  }
-}
-
-/* ─── Animated Gradient Border ─── */
-.gradient-border {
-  position: relative;
-}
-.gradient-border::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--gradient-main);
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+/* Viewport corner brackets — Iron Man only */
+.hud-frame {
+  position: fixed;
+  inset: 0;
+  z-index: 9996;
   pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  opacity: var(--chrome-opacity);
+  transition: opacity var(--theme-fade) var(--ease);
 }
-.gradient-border:hover::before {
-  opacity: 1;
+.hud-frame span {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+}
+.hud-frame span:nth-child(1) {
+  top: 14px;
+  left: 14px;
+  border-top: 1px solid var(--accent);
+  border-left: 1px solid var(--accent);
+}
+.hud-frame span:nth-child(2) {
+  top: 14px;
+  right: 14px;
+  border-top: 1px solid var(--accent-2);
+  border-right: 1px solid var(--accent-2);
+}
+.hud-frame span:nth-child(3) {
+  bottom: 14px;
+  left: 14px;
+  border-bottom: 1px solid var(--accent-2);
+  border-left: 1px solid var(--accent-2);
+}
+.hud-frame span:nth-child(4) {
+  bottom: 14px;
+  right: 14px;
+  border-bottom: 1px solid var(--accent);
+  border-right: 1px solid var(--accent);
 }
 
-/* ─── Grid Background (Stark Tech) ─── */
 .grid-bg {
   background-image:
-    linear-gradient(rgba(255, 215, 0, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 215, 0, 0.02) 1px, transparent 1px);
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
   background-size: 60px 60px;
+  opacity: var(--grid-opacity);
+  transition: opacity var(--theme-fade) var(--ease);
 }
 
-/* ─── Arc Reactor Pulse ─── */
-@keyframes arc-pulse {
-  0%, 100% { box-shadow: 0 0 10px rgba(79, 195, 247, 0.3), 0 0 30px rgba(79, 195, 247, 0.1); }
-  50% { box-shadow: 0 0 20px rgba(79, 195, 247, 0.6), 0 0 60px rgba(79, 195, 247, 0.2); }
-}
-.arc-pulse {
-  animation: arc-pulse 2s ease-in-out infinite;
-}
-
-/* ─── HUD Flicker ─── */
-@keyframes hud-flicker {
-  0%, 100% { opacity: 1; }
-  92% { opacity: 1; }
-  93% { opacity: 0.3; }
-  94% { opacity: 1; }
-  96% { opacity: 0.5; }
-  97% { opacity: 1; }
-}
-.hud-flicker {
-  animation: hud-flicker 4s ease-in-out infinite;
-}
-
-/* ─── Scan Sweep ─── */
-@keyframes scan-sweep {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-/* ─── Red Line Accent ─── */
-.red-top-accent {
-  position: relative;
-}
-.red-top-accent::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent-red), var(--accent-gold), transparent);
-  opacity: 0.6;
-  transition: opacity 0.3s;
-}
-.red-top-accent:hover::before {
-  opacity: 1;
-}
-
-/* ─── Status Badge ─── */
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-family: var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  border: 1px solid rgba(79, 195, 247, 0.3);
-  background: rgba(79, 195, 247, 0.08);
-  color: var(--accent-arc);
-}
-.status-badge::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent-arc);
-  animation: arc-pulse 2s ease-in-out infinite;
-}
-
-/* ─── Reduced Motion ─── */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
-/* ─── Utility for 3D canvas ─── */
 .canvas-container {
   position: fixed;
   inset: 0;
@@ -326,9 +490,341 @@ section {
   pointer-events: none;
 }
 
-/* ─── Container ─── */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
+/* ═══════════════════════════════════════════════════════════
+   SECTION-SPECIFIC
+   ═══════════════════════════════════════════════════════════ */
+
+/* Hero: single column on small screens, asymmetric two-column once there
+   is genuinely room for a second column. */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 44px;
+  align-items: center;
+}
+
+@media (min-width: 940px) {
+  .hero-grid {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+    gap: 64px;
+  }
+}
+
+/* Ambient depth behind the hero so the composition has a center of gravity. */
+#hero::before {
+  content: "";
+  position: absolute;
+  top: -10%;
+  left: -5%;
+  width: 70vw;
+  height: 70vh;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    var(--accent-soft),
+    transparent 65%
+  );
+  opacity: 0.85;
+  filter: blur(30px);
+}
+
+.social-link {
+  transition: color 0.25s var(--ease);
+}
+.social-link:hover {
+  color: var(--accent);
+}
+
+/* The featured project spans two columns, but only once the grid
+   actually has two columns to span. */
+/* Featured projects take a full row: screenshot left, story right. */
+@media (min-width: 780px) {
+  .project-featured {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 779px) {
+  .project-featured {
+    grid-column: auto !important;
+  }
+}
+
+/* Underline sweeps in from the left on hover. */
+.email-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
   width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.4s var(--ease);
+}
+.email-link:hover::after,
+.email-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MODE-ONLY HELPERS
+   For decoration that exists in one mode only. Layout-affecting
+   pieces use display; overlays use --chrome-opacity instead.
+   ═══════════════════════════════════════════════════════════ */
+
+[data-mode="default"] .hud-only,
+:root:not([data-mode]) .hud-only {
+  display: none !important;
+}
+[data-mode="ironman"] .default-only {
+  display: none !important;
+}
+
+/* ─── Mission Log ─── */
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+@media (min-width: 860px) {
+  .mission-grid {
+    grid-template-columns: minmax(0, 1fr) 250px;
+    gap: 36px;
+  }
+  .mission-meta {
+    border-left: 1px solid var(--border);
+    padding-left: 26px;
+  }
+}
+
+/* A pulse of light travelling down the conduit. */
+.conduit-pulse {
+  position: absolute;
+  left: -1px;
+  width: 3px;
+  height: 90px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, transparent, var(--accent-3), transparent);
+  box-shadow: var(--glow-arc);
+  animation: conduit-travel 4.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes conduit-travel {
+  0% { top: -90px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ─── Training ─── */
+
+.training-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 22px;
+}
+@media (min-width: 860px) {
+  .training-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  }
+}
+
+/* ─── Operator Profile ─── */
+
+/* One sweep of a scan line over the bio when it scrolls in. */
+.scan-once {
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  height: 2px;
+  top: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--accent-3), transparent);
+  box-shadow: var(--glow-arc);
+  opacity: 0;
+}
+.scan-once.run {
+  animation: scan-sweep 1.6s var(--ease) 0.2s 1 both;
+}
+@keyframes scan-sweep {
+  0% { top: 0; opacity: 0; }
+  12% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ─── Deployed Systems ─── */
+
+@media (min-width: 780px) {
+  .project-featured .project-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  }
+  .project-featured .project-thumb {
+    aspect-ratio: auto !important;
+    min-height: 340px;
+    border-bottom: 0 !important;
+    border-right: 1px solid var(--border);
+  }
+  .project-featured .project-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px !important;
+  }
+}
+
+.project-thumb img {
+  transition: filter 0.5s var(--ease), transform 0.7s var(--ease);
+}
+.project-card:hover .project-thumb img {
+  transform: scale(1.035);
+}
+
+/* Hologram: screenshots render as a cyan/gold projection until hovered.
+   This also evens out screenshots with clashing palettes. */
+[data-mode="ironman"] .project-thumb img {
+  filter: grayscale(1) contrast(1.15) brightness(0.72);
+}
+[data-mode="ironman"] .project-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    160deg,
+    rgba(79, 195, 247, 0.55),
+    rgba(79, 195, 247, 0.18) 55%,
+    rgba(232, 178, 58, 0.35)
+  );
+  mix-blend-mode: color;
+  transition: opacity 0.5s var(--ease);
+}
+[data-mode="ironman"] .project-card:hover .project-thumb img {
+  filter: none;
+}
+[data-mode="ironman"] .project-card:hover .project-thumb::after {
+  opacity: 0;
+}
+
+/* Targeting-bar filter row */
+[data-mode="ironman"] .filter-bar {
+  padding: 10px;
+  border: 1px solid var(--border);
+  background: rgba(8, 9, 13, 0.6);
+  position: relative;
+}
+[data-mode="ironman"] .filter-bar::before {
+  content: "TARGET FILTER";
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  padding: 0 8px;
+  background: var(--bg);
+  font-family: var(--font-mono-active);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--accent-3);
+}
+[data-mode="ironman"] .filter-chip {
+  border-radius: 2px !important;
+  font-family: var(--font-ui-active) !important;
+  font-weight: 600;
+  font-size: 0.8rem !important;
+}
+[data-mode="ironman"] .filter-chip[aria-pressed="true"] {
+  border-color: var(--accent-3) !important;
+  background: var(--arc-soft) !important;
+  color: var(--accent-3) !important;
+  box-shadow: var(--glow-arc);
+}
+[data-mode="ironman"] .filter-chip[aria-pressed="true"]::before {
+  content: "◎ ";
+}
+
+/* ─── Comms terminal ─── */
+
+.comm-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.comm-strip > * {
+  padding: 18px 20px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: 0 -1px -1px 0;
+  transition: background-color 0.25s var(--ease);
+}
+.comm-strip > a:hover {
+  background: var(--arc-soft);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   KEYFRAMES
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes arc-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes hud-flicker {
+  0%,
+  92%,
+  100% {
+    opacity: 1;
+  }
+  93% {
+    opacity: 0.3;
+  }
+  94% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.5;
+  }
+  97% {
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

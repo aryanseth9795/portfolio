@@ -1,140 +1,228 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { experiences } from "@/lib/data";
-import { fadeInUp } from "@/lib/animations";
-import SectionTitle from "@/components/ui/SectionTitle";
-import GlassCard from "@/components/ui/GlassCard";
+import SectionHeading from "@/components/ui/SectionHeading";
+import Reveal from "@/components/ui/Reveal";
+import Panel from "@/components/ui/Panel";
+import Tag from "@/components/ui/Tag";
 
+/**
+ * Two-column cards: the story on the left, the facts (period, location,
+ * stack) on the right — so wide screens no longer leave the right 40% of
+ * every card empty.
+ *
+ * Iron Man adds a mission header strip per card and a pulse travelling down
+ * the conduit. Both are .hud-only, so this file never branches on mode.
+ */
 export default function Experience() {
+  const total = experiences.length;
+
   return (
     <section id="experience" className="section-padding">
-      <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <SectionTitle
-          title="Experience"
-          subtitle="Deployment history and active missions."
-        />
+      <div className="container">
+        <SectionHeading section="experience" />
 
-        <div className="relative max-w-3xl mx-auto">
-          {/* Timeline line */}
-          <motion.div
-            className="absolute left-[20px] md:left-1/2 md:-translate-x-1/2 top-0 bottom-0 w-[2px]"
-            style={{ background: "var(--gradient-main)" }}
-            initial={{ height: 0 }}
-            whileInView={{ height: "100%" }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-          />
+        <div style={{ position: "relative", paddingLeft: 30 }}>
+          {/* Conduit */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 6,
+              bottom: 6,
+              width: 1,
+              background:
+                "linear-gradient(180deg, var(--accent), var(--border), transparent)",
+            }}
+          >
+            <span className="conduit-pulse hud-only" />
+          </div>
 
-          {experiences.map((exp, i) => (
-            <motion.div
-              key={i}
-              variants={fadeInUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: "-50px" }}
-              custom={i}
-              className={`relative flex flex-col md:flex-row items-start gap-6 mb-12 ${
-                i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"
-              }`}
-            >
-              {/* Timeline dot — arc reactor style */}
-              <motion.div
-                className="absolute left-[14px] md:left-1/2 md:-translate-x-1/2 w-3 h-3 rounded-full z-10 mt-8"
-                style={{
-                  background: "var(--accent-gold)",
-                  boxShadow:
-                    "0 0 12px rgba(255, 215, 0, 0.6), 0 0 24px rgba(230, 36, 41, 0.3)",
-                }}
-                animate={{
-                  boxShadow: [
-                    "0 0 12px rgba(255, 215, 0, 0.4), 0 0 24px rgba(230, 36, 41, 0.2)",
-                    "0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(230, 36, 41, 0.4)",
-                    "0 0 12px rgba(255, 215, 0, 0.4), 0 0 24px rgba(230, 36, 41, 0.2)",
-                  ],
-                }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              />
-
-              {/* Card */}
-              <div className="pl-12 md:pl-0 md:w-1/2">
-                <GlassCard>
-                  <div className="flex items-center gap-2 mb-2">
-                    {exp.highlight && (
-                      <span
-                        className="text-[10px] px-2.5 py-0.5 rounded-sm font-bold uppercase tracking-widest"
-                        style={{
-                          background: "rgba(230, 36, 41, 0.1)",
-                          color: "var(--accent-red)",
-                          border: "1px solid rgba(230, 36, 41, 0.3)",
-                          fontFamily: "var(--font-mono)",
-                        }}
-                      >
-                        ● Active
-                      </span>
-                    )}
+          <div style={{ display: "grid", gap: 26 }}>
+            {experiences.map((exp, i) => {
+              // Missions are numbered oldest-first; the list is newest-first.
+              const missionNo = String(total - i).padStart(2, "0");
+              return (
+                <Reveal key={exp.company} delay={i * 0.08}>
+                  <div style={{ position: "relative" }}>
+                    {/* Node */}
                     <span
-                      className="text-xs"
+                      aria-hidden="true"
                       style={{
-                        color: "var(--text-muted)",
-                        fontFamily: "var(--font-mono)",
+                        position: "absolute",
+                        left: -35,
+                        top: 26,
+                        width: 11,
+                        height: 11,
+                        transform: "rotate(45deg)",
+                        border: "1px solid var(--accent)",
+                        background: i === 0 ? "var(--accent)" : "var(--bg)",
+                        boxShadow: i === 0 ? "0 0 12px var(--accent)" : "none",
                       }}
-                    >
-                      {exp.period}
-                    </span>
-                  </div>
+                    />
 
-                  <h3
-                    className="text-lg font-bold mb-1 tracking-wider"
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      color: "var(--text-primary)",
-                      fontSize: 15,
-                    }}
-                  >
-                    {exp.role}
-                  </h3>
-
-                  <p
-                    className="text-sm mb-3 font-medium"
-                    style={{ color: "var(--accent-gold)" }}
-                  >
-                    {exp.company}
-                  </p>
-
-                  <p
-                    className="text-sm mb-4 leading-relaxed"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    {exp.description}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2">
-                    {exp.tags.map((tag) => (
-                      <motion.span
-                        key={tag}
-                        className="text-xs px-2.5 py-1 rounded-sm"
+                    <Panel>
+                      {/* Mission strip — Iron Man only */}
+                      <div
+                        className="hud-only mono"
                         style={{
-                          background: "rgba(255, 215, 0, 0.06)",
-                          color: "var(--accent-gold)",
-                          border: "1px solid rgba(255, 215, 0, 0.15)",
-                          fontFamily: "var(--font-mono)",
-                          letterSpacing: "0.05em",
-                          fontSize: 10,
-                        }}
-                        whileHover={{
-                          background: "rgba(255, 215, 0, 0.12)",
-                          borderColor: "rgba(255, 215, 0, 0.3)",
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          flexWrap: "wrap",
+                          margin: "-24px -24px 22px",
+                          padding: "9px 24px",
+                          borderBottom: "1px solid var(--border)",
+                          background:
+                            "linear-gradient(90deg, var(--accent-soft), transparent 70%)",
+                          fontSize: 11,
+                          letterSpacing: "0.22em",
+                          textTransform: "uppercase",
                         }}
                       >
-                        {tag}
-                      </motion.span>
-                    ))}
+                        <span style={{ color: "var(--accent)" }}>
+                          Mission {missionNo}
+                          {exp.highlight && (
+                            <span style={{ color: "var(--accent-2)", marginLeft: 14 }}>
+                              ◆ Priority
+                            </span>
+                          )}
+                        </span>
+                        <span
+                          style={{
+                            color: "var(--accent-3)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: 7,
+                          }}
+                        >
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: "50%",
+                              background: "var(--accent-3)",
+                            }}
+                          />
+                          Status: complete
+                        </span>
+                      </div>
+
+                      <div className="mission-grid">
+                        {/* Story */}
+                        <div>
+                          <h3
+                            style={{
+                              fontSize: "var(--step-1)",
+                              margin: "0 0 8px",
+                              lineHeight: 1.2,
+                            }}
+                          >
+                            {exp.role}
+                          </h3>
+                          <div
+                            style={{
+                              fontSize: "var(--step-0)",
+                              color: "var(--text)",
+                              fontWeight: 600,
+                              marginBottom: 14,
+                            }}
+                          >
+                            {exp.company}
+                          </div>
+                          <p
+                            style={{
+                              margin: 0,
+                              color: "var(--text-dim)",
+                              lineHeight: 1.75,
+                              maxWidth: "68ch",
+                            }}
+                          >
+                            {exp.description}
+                          </p>
+                        </div>
+
+                        {/* Facts */}
+                        <dl
+                          className="mission-meta"
+                          style={{
+                            margin: 0,
+                            display: "grid",
+                            gap: 16,
+                            alignContent: "start",
+                          }}
+                        >
+                          {[
+                            { k: "Period", v: exp.period, accent: true },
+                            { k: "Location", v: exp.location },
+                          ].map(({ k, v, accent }) => (
+                            <div key={k}>
+                              <dt
+                                className="mono"
+                                style={{
+                                  fontSize: 11,
+                                  letterSpacing: "0.18em",
+                                  textTransform: "uppercase",
+                                  color: "var(--text-dim)",
+                                  marginBottom: 4,
+                                }}
+                              >
+                                {k}
+                              </dt>
+                              <dd
+                                className="tabular"
+                                style={{
+                                  margin: 0,
+                                  color: accent ? "var(--accent)" : "var(--text)",
+                                  fontFamily: accent
+                                    ? "var(--font-mono-active)"
+                                    : undefined,
+                                  fontSize: accent ? "0.82rem" : "0.95rem",
+                                  letterSpacing: accent ? "0.06em" : undefined,
+                                }}
+                              >
+                                {v}
+                              </dd>
+                            </div>
+                          ))}
+                          <div>
+                            <dt
+                              className="mono"
+                              style={{
+                                fontSize: 11,
+                                letterSpacing: "0.18em",
+                                textTransform: "uppercase",
+                                color: "var(--text-dim)",
+                                marginBottom: 8,
+                              }}
+                            >
+                              Stack
+                            </dt>
+                            <dd
+                              style={{
+                                margin: 0,
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 7,
+                              }}
+                            >
+                              {exp.tags.map((tag) => (
+                                <Tag key={tag} accent={exp.highlight}>
+                                  {tag}
+                                </Tag>
+                              ))}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                    </Panel>
                   </div>
-                </GlassCard>
-              </div>
-            </motion.div>
-          ))}
+                </Reveal>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

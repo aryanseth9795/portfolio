@@ -1,169 +1,109 @@
 "use client";
 
 import { useRef } from "react";
-import {
-  motion,
-  useInView,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "framer-motion";
-import { useEffect } from "react";
-import { stats } from "@/lib/data";
-import { fadeInUp, hudSlideIn } from "@/lib/animations";
-import SectionTitle from "@/components/ui/SectionTitle";
-
-function AnimatedCounter({ value, suffix }: { value: number; suffix: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
-  const motionVal = useMotionValue(0);
-  const spring = useSpring(motionVal, { duration: 2000, bounce: 0 });
-  const rounded = useTransform(spring, (v: number) => Math.round(v));
-
-  useEffect(() => {
-    if (inView) motionVal.set(value);
-  }, [inView, motionVal, value]);
-
-  useEffect(() => {
-    const unsub = rounded.on("change", (v) => {
-      if (ref.current) ref.current.textContent = `${v}${suffix}`;
-    });
-    return unsub;
-  }, [rounded, suffix]);
-
-  return (
-    <span
-      ref={ref}
-      className="text-4xl md:text-5xl font-bold"
-      style={{
-        fontFamily: "var(--font-display)",
-        color: "var(--accent-gold)",
-        textShadow: "0 0 20px rgba(255, 215, 0, 0.3)",
-      }}
-    >
-      0{suffix}
-    </span>
-  );
-}
+import { useInView } from "framer-motion";
+import { about, stats, personalInfo } from "@/lib/data";
+import SectionHeading from "@/components/ui/SectionHeading";
+import Reveal from "@/components/ui/Reveal";
+import StatCounter from "@/components/ui/StatCounter";
+import Panel from "@/components/ui/Panel";
 
 export default function About() {
+  const [lead, ...rest] = about;
+  const bioRef = useRef<HTMLDivElement>(null);
+  const bioInView = useInView(bioRef, { once: true, margin: "-120px" });
+
   return (
     <section id="about" className="section-padding">
-      <div className="container" style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <SectionTitle title="About Me" />
+      <div className="container">
+        <SectionHeading section="about" />
 
-        <div className="flex flex-col lg:flex-row gap-12 items-start">
-          {/* Bio */}
-          <motion.div
-            className="flex-1"
-            variants={fadeInUp}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            <div
-              className="space-y-5 text-base md:text-lg leading-relaxed"
-              style={{ color: "var(--text-muted)" }}
-            >
-              <motion.div variants={hudSlideIn} custom={0}>
-                <span
-                  className="text-xs block mb-1 tracking-widest uppercase"
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 340px), 1fr))",
+            gap: 56,
+            alignItems: "start",
+          }}
+        >
+          {/* Bio — Iron Man sweeps a scan line over it once on reveal */}
+          <div ref={bioRef} style={{ position: "relative" }}>
+            <span
+              aria-hidden="true"
+              className={`scan-once hud-only${bioInView ? " run" : ""}`}
+            />
+            <Reveal>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "var(--step-2)",
+                  lineHeight: 1.4,
+                  color: "var(--text)",
+                  textWrap: "balance",
+                }}
+              >
+                {lead}
+              </p>
+            </Reveal>
+
+            {rest.map((para, i) => (
+              <Reveal key={i} delay={0.08 * (i + 1)}>
+                <p
                   style={{
-                    color: "var(--accent-arc)",
-                    fontFamily: "var(--font-mono)",
+                    margin: "22px 0 0",
+                    fontSize: "var(--step-0)",
+                    lineHeight: 1.7,
+                    color: "var(--text-dim)",
+                    maxWidth: "60ch",
                   }}
                 >
-                  {">"} Designation
-                </span>
-                <p>
-                  B.Tech ECE graduate from IIIT Bhagalpur (2025), now deployed
-                  as a GenAI & Full Stack SDE intern at{" "}
-                  <span className="gradient-text font-semibold">
-                    UltraTech Cement, Aditya Birla Group
-                  </span>
-                  .
+                  {para}
                 </p>
-              </motion.div>
-              <motion.div variants={hudSlideIn} custom={1}>
-                <span
-                  className="text-xs block mb-1 tracking-widest uppercase"
-                  style={{
-                    color: "var(--accent-arc)",
-                    fontFamily: "var(--font-mono)",
-                  }}
-                >
-                  {">"} Mission
-                </span>
-                <p>
-                  Building intelligent, production-grade applications at the
-                  intersection of modern web and AI. Obsessed with clean
-                  architecture, premium UIs, and software that actually ships.
-                </p>
-              </motion.div>
-              <motion.div variants={hudSlideIn} custom={2}>
-                <span
-                  className="text-xs block mb-1 tracking-widest uppercase"
-                  style={{
-                    color: "var(--accent-arc)",
-                    fontFamily: "var(--font-mono)",
-                  }}
-                >
-                  {">"} Objective
-                </span>
-                <p>
-                  Building toward launching my own tech startup.
-                </p>
-              </motion.div>
-            </div>
+              </Reveal>
+            ))}
+          </div>
 
-            {/* Quote */}
-            <motion.blockquote
-              variants={fadeInUp}
-              custom={3}
-              className="mt-8 pl-4 text-lg italic"
-              style={{
-                borderLeft: "2px solid var(--accent-gold)",
-                color: "var(--text-primary)",
-                fontFamily: "var(--font-display)",
-                fontSize: 14,
-                letterSpacing: "0.05em",
-              }}
-            >
-              &quot;I don&apos;t just write code — I engineer experiences.&quot;
-            </motion.blockquote>
-          </motion.div>
+          {/* Stats */}
+          <Reveal delay={0.15}>
+            <Panel interactive={false}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 32,
+                }}
+              >
+                {stats.map((stat) => (
+                  <StatCounter
+                    key={stat.label}
+                    value={stat.value}
+                    suffix={stat.suffix}
+                    label={stat.label}
+                  />
+                ))}
+              </div>
 
-          {/* Stats grid */}
-          <motion.div
-            className="flex-1 w-full"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            <div className="grid grid-cols-2 gap-6">
-              {stats.map((stat, i) => (
-                <motion.div
-                  key={stat.label}
-                  variants={fadeInUp}
-                  custom={i}
-                  className="glass hud-corners text-center p-6 rounded-2xl red-top-accent"
-                  style={{ border: "1px solid var(--border-glow)" }}
-                >
-                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-                  <p
-                    className="mt-2 text-sm uppercase tracking-wider"
-                    style={{
-                      color: "var(--text-muted)",
-                      fontFamily: "var(--font-mono)",
-                      fontSize: 11,
-                    }}
-                  >
-                    {stat.label}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+              <div
+                style={{
+                  marginTop: 30,
+                  paddingTop: 22,
+                  borderTop: "1px solid var(--border)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  flexWrap: "wrap",
+                }}
+                className="mono"
+              >
+                <span style={{ fontSize: "0.72rem", color: "var(--text-dim)", letterSpacing: "0.1em" }}>
+                  {personalInfo.location}
+                </span>
+                <span style={{ fontSize: "0.72rem", color: "var(--accent)", letterSpacing: "0.1em" }}>
+                  {personalInfo.title}
+                </span>
+              </div>
+            </Panel>
+          </Reveal>
         </div>
       </div>
     </section>
